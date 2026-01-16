@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EVE Studio - v12.3 DecoFix</title>
+    <title>Rainy eve Bubble - v13.1 TransferPro (Fixed)</title>
     <style>
         :root { 
             --bg-body: #f4f6f9; 
@@ -219,7 +219,35 @@
             font-size: 11px; color: #856404; background-color: #fff3cd; 
             border: 1px solid #ffeeba; padding: 8px; border-radius: 6px; margin-top: 8px;
         }
+        
+        /* TRANSFER CARD DEMO STYLES */
+        .transfer-card-demo, .transfer-card {
+            width: 230px; 
+            height: 150px;
+            background: #fa9d3b; /* Fallback */
+            border-radius: 12px;
+            position: relative;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        /* Fix for chat row */
+        .chat-row .transfer-card { margin: 0; box-shadow: none; }
+
+        .transfer-icon-area { display:flex; align-items:center; gap:10px; z-index:2; position:relative; }
+        .icon-symbol { width: 36px; height: 36px; border: 2px solid currentColor; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+        .transfer-info-area { z-index:2; position:relative; margin-top:10px; flex:1; display:flex; flex-direction:column; justify-content:center; }
+        .transfer-amount { font-size: 26px; font-weight: bold; margin-bottom: 2px; }
+        .transfer-title { font-size: 14px; opacity: 0.9; }
+        .transfer-footer { z-index:2; position:relative; font-size: 11px; opacity: 0.7; }
+
     </style>
+    <!-- Dynamic CSS Injection for Transfer Preview -->
+    <style id="dynamic-transfer-css"></style>
 </head>
 <body>
 
@@ -232,6 +260,7 @@
                 <button class="tab-btn" onclick="switchTab(2)">蒙版</button>
                 <button class="tab-btn" onclick="switchTab(3)">贴图</button>
                 <button class="tab-btn" onclick="switchTab(6)">装饰</button>
+                <button class="tab-btn" onclick="switchTab(7)">转账</button>
                 <button class="tab-btn" onclick="switchTab(4)">模拟</button>
                 <button class="tab-btn" onclick="switchTab(5)">导出</button>
             </div>
@@ -613,6 +642,13 @@
                             </div>
                             <input type="range" id="sticker1Y" class="save-state" min="-100" max="100" step="0.5" value="-10" oninput="syncRange('sticker1Y', 'num-s1Y')">
                         </div>
+                        <div>
+                            <div class="label-row">
+                                <span class="label-text">旋转 (Rotation)</span>
+                                <span class="label-val" id="val-s1Rot">0°</span>
+                            </div>
+                            <input type="range" id="sticker1Rot" class="save-state" min="-180" max="180" step="1" value="0" oninput="update()">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -676,6 +712,13 @@
                             </div>
                             <input type="range" id="sticker2Y" class="save-state" min="-100" max="100" step="0.5" value="10" oninput="syncRange('sticker2Y', 'num-s2Y')">
                         </div>
+                        <div>
+                            <div class="label-row">
+                                <span class="label-text">旋转 (Rotation)</span>
+                                <span class="label-val" id="val-s2Rot">0°</span>
+                            </div>
+                            <input type="range" id="sticker2Rot" class="save-state" min="-180" max="180" step="1" value="0" oninput="update()">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -693,6 +736,95 @@
                 
                 <button class="add-layer-btn" onclick="addDecorationLayer()">+ 添加装饰图层</button>
                 <div class="layer-list" id="layerList"></div>
+            </div>
+        </div>
+        
+        <!-- Tab 7: 转账 (NEW) -->
+        <div class="tab-content" id="tab7">
+            <h2>转账卡片设置</h2>
+            
+            <!-- Shape -->
+            <div class="control-group">
+                <div class="label-row"><span class="label-text">卡片形态 (Shape)</span></div>
+                <select id="tShape" class="save-state" onchange="updateTransferCSS()">
+                    <option value="default">默认圆角 (Rectangle)</option>
+                    <option value="circle">正圆 (Circle)</option>
+                    <option value="diamond">菱形 (Diamond)</option>
+                    <option value="hexagon">六边形 (Hexagon)</option>
+                </select>
+                <div id="tRadiusControl" style="margin-top:10px;">
+                    <div class="label-row"><span class="label-text">圆角半径</span><span class="label-val" id="val-tRadius">12px</span></div>
+                    <input type="range" id="tRadius" class="save-state" min="0" max="100" value="12" oninput="updateTransferCSS()">
+                </div>
+            </div>
+
+            <!-- Background -->
+            <div class="control-group">
+                <div class="label-row"><span class="label-text">背景图层 (Background)</span></div>
+                <input type="file" onchange="uploadImg(this, 'tBg')" style="font-size:12px; margin-bottom:5px;">
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="tBgUrl" placeholder="背景图片 URL" class="save-state" style="flex:1; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+                    <button onclick="updateTransferCSS()" style="font-size:11px; padding:0 8px;">应用</button>
+                </div>
+                <div class="label-row" style="margin-top:5px;"><span class="label-text">背景适配</span></div>
+                <select id="tBgSize" class="save-state" onchange="updateTransferCSS()">
+                    <option value="cover">填充 (Cover)</option>
+                    <option value="contain">适应 (Contain)</option>
+                </select>
+                
+                <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
+                    <span class="label-text">叠加渐变 (Gradient Overlay)</span>
+                    <input type="checkbox" id="tGradSwitch" class="save-state" onchange="updateTransferCSS()">
+                </div>
+                <div id="tGradControls" style="display:none; margin-top:5px; background:#f5f5f7; padding:10px; border-radius:8px;">
+                     <div class="color-row">
+                        <input type="color" id="tGc1" value="#ff6b9d" class="save-state" oninput="updateTransferCSS()">
+                        <input type="color" id="tGc2" value="#fecfe9" class="save-state" oninput="updateTransferCSS()">
+                     </div>
+                     <div class="label-row" style="margin-top:5px;"><span class="label-text">不透明度</span></div>
+                     <input type="range" id="tGradOp" class="save-state" min="0" max="1" step="0.05" value="0.7" oninput="updateTransferCSS()">
+                </div>
+            </div>
+
+            <!-- Decoration -->
+            <div class="control-group">
+                <div class="label-row">
+                    <span class="label-text">纹理装饰 (::before)</span>
+                    <input type="checkbox" id="tDecoSwitch" class="save-state" onchange="updateTransferCSS()">
+                </div>
+                <div id="tDecoControls" style="display:none; margin-top:5px;">
+                    <input type="file" onchange="uploadImg(this, 'tDeco')" style="font-size:12px; margin-bottom:5px;">
+                    <input type="text" id="tDecoUrl" placeholder="纹理图片 URL" class="save-state" style="width:100%; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px; margin-bottom:5px;" onchange="updateTransferCSS()">
+                    <div class="label-row"><span class="label-text">不透明度</span></div>
+                    <input type="range" id="tDecoOp" class="save-state" min="0" max="1" step="0.05" value="0.3" oninput="updateTransferCSS()">
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="control-group">
+                <div class="label-row"><span class="label-text">内容设置 (Content)</span></div>
+                <div class="label-row"><span class="label-text" style="font-weight:400">全局文字颜色</span></div>
+                <div class="color-wrapper">
+                    <input type="color" id="tTextColor" value="#ffffff" class="save-state" oninput="updateTransferCSS()">
+                </div>
+                
+                <div class="label-row" style="margin-top:15px; border-top: 1px dashed #eee; padding-top: 10px;">
+                    <span class="label-text">修改标题内容</span>
+                    <input type="checkbox" id="tContentSwitch" class="save-state" onchange="updateTransferCSS()">
+                </div>
+
+                <div id="tContentControls" style="display:none;">
+                    <div class="label-row" style="margin-top:10px;"><span class="label-text">覆写标题内容</span></div>
+                    <input type="text" id="tTitleText" class="save-state" placeholder="你发起的转账" value="你发起的转账" oninput="updateTransferCSS()" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
+                    
+                    <div class="label-row" style="margin-top:10px;"><span class="label-text">标题字号</span></div>
+                    <input type="range" id="tTitleSize" class="save-state" min="10" max="30" value="14" oninput="updateTransferCSS()">
+                </div>
+            </div>
+            
+             <!-- ★★★ 新增：确认按钮 ★★★ -->
+            <div class="control-group" style="margin-top:20px; border-top:1px dashed #eee; padding-top:15px;">
+                <button class="copy-btn-main" onclick="applyTransferToSim()">✅ 确定并生成到模拟对话</button>
             </div>
         </div>
 
@@ -734,7 +866,7 @@
                 <div id="urlFixList" style="display:flex; flex-direction:column; gap:8px;"></div>
             </div>
 
-            <button class="copy-btn-main" onclick="copyCSS()">一键复制 CSS 代码</button>
+            <button class="copy-btn-main" id="exportBtn" onclick="copyCSS()">一键复制 CSS 代码</button>
             <div class="code-box" id="codeOut"></div>
         </div>
     </div>
@@ -753,23 +885,51 @@
             <div class="preview-bubble" id="soloBubble">
                 Hi! 这里是预览。
             </div>
+            
+            <!-- Transfer Mockup -->
+            <div class="transfer-card-demo" id="transferDemo" style="display:none;">
+                <div class="transfer-icon-area">
+                    <div class="icon-symbol">¥</div>
+                </div>
+                <div class="transfer-info-area">
+                    <div class="transfer-amount">¥ 520.00</div>
+                    <div class="transfer-title" id="tDemoTitle">你发起的转账</div>
+                </div>
+                <div class="transfer-footer">微信转账</div>
+            </div>
 
-            <div class="chat-container" id="chatSim" style="display:none;">
+             <!-- Chat Container (Modified with Transfer slots) -->
+             <div class="chat-container" id="chatSim" style="display:none;">
+                <!-- 1. 左侧：短消息 -->
                 <div class="chat-row left sim-row-left">
                     <div class="chat-avatar"></div>
-                    <div class="chat-bubble-gray sim-bubble-left">Hi</div>
+                    <div class="chat-bubble-gray sim-bubble-left">短</div>
                 </div>
+
+                <!-- ★★★ 隐藏位：对方发来的转账 (左侧) ★★★ -->
+                <!-- 平时隐藏，点击确定按钮后显示 -->
+                <div class="chat-row left sim-transfer-row" style="display:none;">
+                    <div class="chat-avatar"></div>
+                    <div class="transfer-card t-card-target"></div>
+                </div>
+
+                <!-- 2. 右侧：正常长度消息 -->
                 <div class="chat-row right sim-row-right">
                     <div class="chat-avatar"></div>
-                    <div class="preview-bubble sim-bubble-right">这效果怎么样？</div>
+                    <div class="preview-bubble sim-bubble-right">正常长度</div>
                 </div>
+
+                <!-- ★★★ 隐藏位：我发出的转账 (右侧) ★★★ -->
+                <!-- 平时隐藏，点击确定按钮后显示 -->
+                <div class="chat-row right sim-transfer-row" style="display:none;">
+                    <div class="chat-avatar"></div>
+                    <div class="transfer-card t-card-target"></div>
+                </div>
+
+                <!-- 3. 右侧：特别长的消息 -->
                 <div class="chat-row right sim-row-right"> 
                     <div class="chat-avatar" style="visibility:hidden"></div>
-                    <div class="preview-bubble sim-bubble-right">Min-Width 修复了堆叠问题。当气泡变大时，绝对定位的装饰不会消失。</div>
-                </div>
-                <div class="chat-row left sim-row-left">
-                    <div class="chat-avatar"></div>
-                    <div class="chat-bubble-gray sim-bubble-left">不错。</div>
+                    <div class="preview-bubble sim-bubble-right">这是一个特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别长的消息</div>
                 </div>
             </div>
         </div>
@@ -784,41 +944,66 @@
 </div>
 
 <script>
-let assets = { bg: "none", sticker1: null, sticker2: null };
+let assets = { bg: "none", sticker1: null, sticker2: null, tBg: "none", tDeco: "none" };
 let canvasBg = "";
 let gradState = { x: 80, y: 80, angle: 135 };
 let simMode = 'standard'; 
 let decorations = []; // List of decoration layers
 
-function switchTab(idx) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) => {
-        b.classList.remove('active');
-        if (b.innerText === ['外观','质感','蒙版','贴图','模拟','导出','装饰'][idx]) b.classList.add('active');
+// ★★★ 点击确定按钮后执行的功能 ★★★
+function applyTransferToSim() {
+    // 1. 获取你在转账页设计好的内容
+    var demoContent = document.getElementById('transferDemo').innerHTML;
+    
+    // 2. 找到模拟页里那两个空的转账卡片，把内容填进去
+    var targets = document.querySelectorAll('.t-card-target');
+    targets.forEach(function(el) {
+        el.innerHTML = demoContent;
     });
-    
-    const tabs = ['tab0','tab1','tab2','tab3','tab4','tab5','tab6'];
-    tabs.forEach(id => document.getElementById(id).classList.remove('active'));
-    document.getElementById(tabs[idx]).classList.add('active');
-    
-    // Button active state fix (simple way)
-    const buttons = document.querySelectorAll('.tab-btn');
-    buttons.forEach(b => b.classList.remove('active'));
-    const activeBtn = Array.from(buttons).find(b => b.getAttribute('onclick') === `switchTab(${idx})`);
+
+    // 3. 让原本隐藏的转账行显示出来
+    var rows = document.querySelectorAll('.sim-transfer-row');
+    rows.forEach(function(el) {
+        el.style.display = 'flex';
+    });
+
+    // 4. 强制跳转到“模拟”页面
+    switchTab(4);
+}
+
+function switchTab(idx) {
+    // Deactivate all buttons
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    // Activate clicked button
+    const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab(${idx})"]`);
     if(activeBtn) activeBtn.classList.add('active');
+    
+    // Hide all tab content
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    // Show target content
+    document.getElementById('tab'+idx).classList.add('active');
 
     const solo = document.getElementById('soloBubble');
     const sim = document.getElementById('chatSim');
+    const trans = document.getElementById('transferDemo');
     const body = document.body;
     
-    if (idx === 4) { // Tab 4 is Simulation
-        solo.style.display = 'none';
+    // Stage logic
+    solo.style.display = 'none';
+    sim.style.display = 'none';
+    trans.style.display = 'none';
+    body.classList.remove('sim-mode');
+
+    if (idx === 7) { // Transfer Tab
+        trans.style.display = 'flex';
+        updateTransferCSS();
+    } else if (idx === 4) { // Simulation Tab
         sim.style.display = 'flex';
-        body.classList.add('sim-mode'); 
+        body.classList.add('sim-mode');
         update(); 
-    } else {
+    } else { // Others (Bubble editing)
         solo.style.display = 'inline-block';
-        sim.style.display = 'none';
-        body.classList.remove('sim-mode');
+        update();
     }
     
     // Auto Render Fix Panel if export tab
@@ -878,7 +1063,9 @@ function addDecorationLayer() {
         opacity: 1,
         url: '',
         posMode: 'percent', // 'percent' or 'absolute'
-        anchor: 'tl' // tl, tr, bl, br, center
+        anchor: 'tl', // tl, tr, bl, br, center
+        rotation: 0,
+        blur: 0
     });
     renderDecorationList();
     update();
@@ -936,11 +1123,14 @@ function renderDecorationList() {
             controls += `
                 <div class="label-row">
                     <input type="color" value="${layer.color}" oninput="updateDecoration(${i}, 'color', this.value)" style="width:30px; height:20px;">
+                    <div style="flex:1; margin-left:10px;">
+                        <div style="font-size:10px; color:#666;">边缘羽化 (Blur)</div>
+                        <input type="range" min="0" max="100" value="${layer.blur || 0}" oninput="updateDecoration(${i}, 'blur', this.value)" style="height:3px;">
+                    </div>
                 </div>
             `;
         }
         
-        // Position Mode Selector
         let posControls = '';
         if (layer.posMode === 'absolute') {
             posControls = `
@@ -958,8 +1148,6 @@ function renderDecorationList() {
         const rangeMin = isAbs ? -100 : -50;
         const rangeMax = isAbs ? 200 : 150;
         const unit = isAbs ? 'px' : '%';
-        const labelX = isAbs ? 'X 偏移' : 'X 位置';
-        const labelY = isAbs ? 'Y 偏移' : 'Y 位置';
 
         controls += `
              <div style="margin-top:8px;">
@@ -987,6 +1175,12 @@ function renderDecorationList() {
                     <input type="number" class="num-input" value="${layer.y}" oninput="updateDecoration(${i}, 'y', this.value); this.previousElementSibling.value=this.value">
                     <span style="font-size:10px; width:15px; text-align:right;">${unit}</span>
                 </div>
+                ${layer.type === 'image' ? `
+                <div style="display:flex; gap:5px; align-items:center; margin-top:4px;">
+                    <span style="font-size:10px; width:25px;">旋转</span>
+                    <input type="range" min="-180" max="180" value="${layer.rotation || 0}" oninput="updateDecoration(${i}, 'rotation', this.value)" style="flex:1">
+                    <span style="font-size:10px; width:15px; text-align:right;">°</span>
+                </div>` : ''}
             </div>
         `;
 
@@ -1032,15 +1226,13 @@ function applyPreset(name) {
         document.getElementById('inset').value = c.inset;
         document.getElementById('blur').value = c.blur;
         
-        // Reset Secondary Border
         document.getElementById('b2Switch').checked = false;
         
-        // Padding Reset
         document.getElementById('padLock').checked = true;
         togglePadLock();
         document.getElementById('pady').value = c.pady;
         document.getElementById('padx').value = c.padx;
-        updatePad('x'); updatePad('y'); // Sync to individual
+        updatePad('x'); updatePad('y');
 
         document.getElementById('gradBorderSwitch').checked = c.gb || false;
         document.getElementById('sheenSwitch').checked = false;
@@ -1113,7 +1305,10 @@ function updatePad(axis) {
 function uploadImg(input, key) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
-        reader.onload = (e) => { assets[key] = `url('${e.target.result}')`; update(); };
+        reader.onload = (e) => { 
+            assets[key] = `url('${e.target.result}')`; 
+            if(key.startsWith('t')) updateTransferCSS(); else update();
+        };
         reader.readAsDataURL(input.files[0]);
     }
 }
@@ -1159,11 +1354,11 @@ function saveState() {
     ['num-s1X','num-s1Y','num-s2X','num-s2Y'].forEach(id => state[id] = document.getElementById(id).value);
     ['b2Hex'].forEach(id => { if(document.getElementById(id)) state[id] = document.getElementById(id).value; });
     
-    localStorage.setItem('eveBubbleState_Final_V12', JSON.stringify(state));
+    localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(state));
 }
 
 function loadState() {
-    const saved = localStorage.getItem('eveBubbleState_Final_V12');
+    const saved = localStorage.getItem('eveBubbleState_Final_V13');
     if (saved) {
         const state = JSON.parse(saved);
         for (const key in state) {
@@ -1183,18 +1378,14 @@ function loadState() {
         }
         if (state['decorations']) {
             decorations = state['decorations'];
-            // Migration fix for older saves without posMode
             decorations.forEach(d => { if(!d.posMode) d.posMode = 'percent'; });
             renderDecorationList();
         }
         updateLock();
         togglePadLock(); 
-        
-        // Force sync for old saves
         if(document.getElementById('padLock').checked) {
              updatePad('x'); updatePad('y');
         }
-
         return true;
     }
     return false;
@@ -1202,20 +1393,70 @@ function loadState() {
 
 function resetMemory() {
     if(confirm('确定要清除记忆并恢复默认设置吗？')) {
-        localStorage.removeItem('eveBubbleState_Final_V12');
+        localStorage.removeItem('eveBubbleState_Final_V13');
         location.reload();
     }
 }
 
 function copyCSS() {
-    const text = codeOut.innerText;
-    navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('.copy-btn-main');
-        const oldText = btn.innerText;
-        btn.innerText = ' 已复制到剪贴板';
+    // 1. 获取要复制的文本
+    var codeBox = document.getElementById('codeOut');
+    var text = codeBox.innerText;
+
+    // 2. 定义复制成功的反馈效果
+    var showSuccess = function() {
+        var btn = document.getElementById('exportBtn');
+        // 防止文字乱跳，先保存原始文字（如果是默认状态）
+        if (!btn.getAttribute('data-text')) {
+            btn.setAttribute('data-text', btn.innerText);
+        }
+        
+        btn.innerText = '✅ 已复制到剪贴板';
         btn.style.background = '#34c759';
-        setTimeout(() => { btn.innerText = oldText; btn.style.background = '#0066CC'; }, 2000);
-    });
+        
+        setTimeout(function() { 
+            btn.innerText = btn.getAttribute('data-text') || '一键复制 CSS 代码'; 
+            btn.style.background = '#0066CC'; 
+        }, 2000);
+    };
+
+    // 3. 优先尝试现代 API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(showSuccess)
+            .catch(function(err) {
+                // 如果现代 API 失败（比如在非 HTTPS 环境），尝试降级方案
+                fallbackCopy(text);
+            });
+    } else {
+        // 如果不支持现代 API，直接用降级方案
+        fallbackCopy(text);
+    }
+
+    // 4. 降级方案：创建一个隐藏的输入框来复制 (兼容所有浏览器)
+    function fallbackCopy(txt) {
+        var textArea = document.createElement("textarea");
+        textArea.value = txt;
+        
+        // 确保输入框在屏幕外，不影响视觉
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            var successful = document.execCommand('copy');
+            if (successful) showSuccess();
+            else alert('复制失败，请手动全选代码框进行复制。');
+        } catch (err) {
+            alert('浏览器禁止了自动复制，请手动复制。');
+        }
+        
+        document.body.removeChild(textArea);
+    }
 }
 
 const pad = document.getElementById('gradPad');
@@ -1243,16 +1484,141 @@ function updateGradPos(e) {
     update();
 }
 
+/* ---------------- TRANSFER LOGIC ---------------- */
+/* ---------------- 修复后的转账逻辑 ---------------- */
+function updateTransferCSS() {
+    const v = (id) => { const el = document.getElementById(id); return el ? (el.type==='checkbox'?el.checked:el.value) : ''; };
+    
+    // 切换控制面板的显示状态
+    document.getElementById('tGradControls').style.display = v('tGradSwitch') ? 'block' : 'none';
+    document.getElementById('tDecoControls').style.display = v('tDecoSwitch') ? 'block' : 'none';
+    document.getElementById('tRadiusControl').style.display = (v('tShape')==='default') ? 'block' : 'none';
+    
+    // 开关控制内容设置
+    const modifyContent = v('tContentSwitch');
+    const contentControls = document.getElementById('tContentControls');
+    if(contentControls) contentControls.style.display = modifyContent ? 'block' : 'none';
+
+    // 1. 背景图层逻辑
+    let bgLayers = [];
+    
+    // 渐变叠加
+    if (v('tGradSwitch')) {
+        const gc1 = hexToRgba(v('tGc1'), v('tGradOp'));
+        const gc2 = hexToRgba(v('tGc2'), v('tGradOp'));
+        bgLayers.push(`linear-gradient(135deg, ${gc1}, ${gc2})`);
+    }
+
+    // 主背景图
+    let mainImg = assets.tBg !== 'none' ? assets.tBg : (v('tBgUrl') ? `url('${v('tBgUrl')}')` : 'none');
+    if (mainImg !== 'none') bgLayers.push(mainImg);
+    
+    // 如果没有背景，给一个默认的橙色兜底
+    if (bgLayers.length === 0) bgLayers.push('linear-gradient(135deg, #fa9d3b, #f57f20)'); 
+    
+    const bgImageVal = bgLayers.join(', ');
+    const bgSizeVal = v('tBgSize');
+
+    // 2. 形状逻辑
+    const shape = v('tShape');
+    let shapeCSS = '';
+    let childCSS = '';
+    
+    // 注意：这里去掉了多余的 !important，让外部的 display:none 能生效
+    if (shape === 'default') {
+        shapeCSS = `border-radius: ${v('tRadius')}px !important; width: 230px !important; height: 150px !important;`;
+    } else if (shape === 'circle') {
+        shapeCSS = `border-radius: 50% !important; width: 200px !important; height: 200px !important; text-align:center !important; align-items:center !important; justify-content:center !important; padding:0 !important;`;
+    } else if (shape === 'diamond') {
+        shapeCSS = `transform: rotate(45deg) !important; width: 180px !important; height: 180px !important; overflow: visible !important; justify-content:center !important; align-items:center !important;`;
+        childCSS = `transform: rotate(-45deg) !important;`;
+    } else if (shape === 'hexagon') {
+        shapeCSS = `clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%) !important; width: 200px !important; height: 230px !important; justify-content:center !important; align-items:center !important;`;
+    }
+    
+    // 3. 纹理装饰逻辑
+    let decoCSS = '';
+    if (v('tDecoSwitch')) {
+        let dUrl = assets.tDeco !== 'none' ? assets.tDeco : (v('tDecoUrl') ? `url('${v('tDecoUrl')}')` : 'none');
+        if (dUrl !== 'none') {
+            decoCSS = `
+            .transfer-card-demo::before, .transfer-card::before {
+                content: '' !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;
+                background-image: ${dUrl} !important; background-size: cover !important; opacity: ${v('tDecoOp')} !important; z-index: 0 !important; pointer-events: none !important;
+            }
+            .transfer-card > *, .transfer-card-demo > * { position: relative !important; z-index: 1 !important; }
+            `;
+        }
+    }
+
+    // 4. 文字内容逻辑
+    const color = v('tTextColor');
+    let titleCSS = '';
+
+    if (modifyContent) {
+        const title = v('tTitleText').replace(/"/g, '\\"'); // Escape quotes
+        const tSize = v('tTitleSize');
+        titleCSS = `
+    /* 标题文字替换 Hack */
+    .transfer-title, #tDemoTitle {
+        font-size: 0 !important;
+        line-height: 0 !important;
+    }
+    .transfer-title::after, #tDemoTitle::after {
+        content: "${title}" !important;
+        font-size: ${tSize}px !important;
+        line-height: 1.4 !important; /* Fix font display */
+        display: block !important;
+        margin-top: -2px; /* Fine tune alignment */
+    }
+        `;
+    }
+    
+    // 生成 CSS 字符串
+    // ★★★ 关键修改：display: flex 去掉了 !important ★★★
+    const css = `
+    .transfer-card, .transfer-card-demo {
+        background-image: ${bgImageVal} !important;
+        background-size: ${bgSizeVal} !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        color: ${color} !important;
+        display: flex; 
+        flex-direction: column !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+        ${shapeCSS}
+    }
+    .transfer-card *, .transfer-card-demo * {
+        color: ${color} !important;
+    }
+    .transfer-card > *, .transfer-card-demo > * {
+        ${childCSS}
+    }
+    
+    ${titleCSS}
+    ${decoCSS}
+    `;
+    
+    // 注入样式
+    document.getElementById('dynamic-transfer-css').innerHTML = css;
+    
+    // 保存状态
+    saveState();
+    
+    // 如果在导出页，顺便更新代码框
+    if(document.getElementById('tab5').classList.contains('active')) update();
+}
+
+/* ---------------- EXISTING UPDATE LOGIC ---------------- */
 function update() {
     const v = (id) => { const el = document.getElementById(id); return el ? el.value : 0; };
     
-    // 1. 获取开关状态
     const hasSticker1 = document.getElementById('sticker1Switch').checked;
     let hasSticker2 = document.getElementById('sticker2Switch').checked;
-    const isGb = document.getElementById('gradBorderSwitch').checked; // 流光边框
-    const isB2 = document.getElementById('b2Switch').checked; // 第二边框
+    const isGb = document.getElementById('gradBorderSwitch').checked; 
+    const isB2 = document.getElementById('b2Switch').checked; 
     
-    // 处理流光边框与Sticker2的冲突
     if (isGb) {
         document.getElementById('sticker2Controls').style.display = 'none';
         document.getElementById('sticker2DisabledMsg').style.display = 'block';
@@ -1265,24 +1631,22 @@ function update() {
     document.getElementById('sticker1Controls').style.display = hasSticker1 ? 'block' : 'none';
     document.getElementById('b2Controls').style.display = isB2 ? 'block' : 'none';
 
-    // 更新数值显示
     ['radius','inset','blur','alpha','bwidth','shadow','boffset','pady','padx','b2width','maxWidth'].forEach(id => {
         if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id);
     });
-    // New Pad Values
     ['pt','pb','pl','pr'].forEach(id => {
         if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id);
     });
 
     if(document.getElementById('val-sheenW')) document.getElementById('val-sheenW').innerText = v('sheenWidth');
     
-    ['sticker1Size','sticker1Op'].forEach(id => {
+    ['sticker1Size','sticker1Op', 'sticker1Rot'].forEach(id => {
         if(document.getElementById('val-'+id.replace('sticker1','s1'))) 
-             document.getElementById('val-'+id.replace('sticker1','s1')).innerText = v(id);
+             document.getElementById('val-'+id.replace('sticker1','s1')).innerText = v(id) + (id.includes('Rot')?'°':'');
     });
-    ['sticker2Size','sticker2Op'].forEach(id => {
+    ['sticker2Size','sticker2Op', 'sticker2Rot'].forEach(id => {
         if(document.getElementById('val-'+id.replace('sticker2','s2'))) 
-             document.getElementById('val-'+id.replace('sticker2','s2')).innerText = v(id);
+             document.getElementById('val-'+id.replace('sticker2','s2')).innerText = v(id) + (id.includes('Rot')?'°':'');
     });
 
     saveState();
@@ -1348,7 +1712,6 @@ function update() {
         sheenLayer = `linear-gradient(${sAng}deg, transparent ${start}%, ${sColorRgba} ${sPos}%, transparent ${end}%)`;
     }
 
-    // --- 应用目标逻辑 ---
     let targets = [];
     targets.push(document.getElementById('soloBubble'));
     document.querySelectorAll('.sim-bubble-right').forEach(el => targets.push(el));
@@ -1373,52 +1736,35 @@ function update() {
         clips.push("padding-box"); 
     }
     
-    // Decorations Layer - UPDATED LOGIC (Anchor support)
     decorations.forEach(dec => {
         const op = dec.opacity;
-        // Determine Position String
         let posStr = 'center';
         if (!dec.posMode || dec.posMode === 'percent') {
-            // Relative (%)
             posStr = `${dec.x}% ${dec.y}%`;
         } else {
-            // Absolute (px) with Anchor
             const dx = dec.x + 'px';
             const dy = dec.y + 'px';
             const anc = dec.anchor || 'tl';
-            
             if (anc === 'tl') posStr = `left ${dx} top ${dy}`;
-            else if (anc === 'tr') posStr = `right ${dx} top ${dy}`; // Note: user might want negative for offset out, but sliders allow neg
+            else if (anc === 'tr') posStr = `right ${dx} top ${dy}`; 
             else if (anc === 'bl') posStr = `left ${dx} bottom ${dy}`;
             else if (anc === 'br') posStr = `right ${dx} bottom ${dy}`;
             else if (anc === 'center') posStr = `calc(50% + ${dx}) calc(50% + ${dy})`;
         }
 
         if (dec.type === 'circle') {
-            const sz = dec.size + 'px';
-            bgImages.push(`radial-gradient(circle at ${posStr.includes('calc') || dec.posMode==='absolute' ? posStr : dec.x+'% '+dec.y+'%'}, ${hexToRgba(dec.color, op)} 0%, transparent ${sz})`);
-            // Gradient syntax puts position inside.
-            // For external pos:
+            const blurVal = parseInt(dec.blur || 0);
+            const hardStop = Math.max(0, 100 - blurVal);
             if(dec.posMode === 'absolute') {
-                 // Complex case: Radial gradient internal positioning syntax is tricky with calc.
-                 // Fallback: We use radial-gradient without position, and set background-position.
-                 // BUT radial-gradient(circle, ...) centers it in the "box".
-                 // Simpler: Use background-position for the gradient layer.
-                 // We need to redefine the gradient string to NOT include position, and let CSS background-position handle it.
-                 // However, standard radial-gradient centers in the "image box".
-                 // Hack: standard radial gradient with position INSIDE is easier for browsers?
-                 // Let's stick to standard background-position logic for consistency.
-                 bgImages.push(`radial-gradient(closest-side, ${hexToRgba(dec.color, op)} 0%, transparent 100%)`);
+                 bgImages.push(`radial-gradient(closest-side, ${hexToRgba(dec.color, op)} 0%, ${hexToRgba(dec.color, op)} ${hardStop}%, transparent 100%)`);
             } else {
-                 // Keep old logic for percent
-                 bgImages.pop(); // remove prev
-                 bgImages.push(`radial-gradient(circle at ${dec.x}% ${dec.y}%, ${hexToRgba(dec.color, op)} 0%, transparent ${dec.size}px)`);
-                 posStr = '0 0'; // Handled inside
+                 bgImages.pop(); 
+                 bgImages.push(`radial-gradient(circle at ${dec.x}% ${dec.y}%, ${hexToRgba(dec.color, op)} 0%, ${hexToRgba(dec.color, op)} ${hardStop}%, transparent ${dec.size}px)`);
+                 posStr = '0 0';
             }
-            
             if (dec.posMode === 'absolute') {
                  bgPositions.push(posStr);
-                 bgSizes.push(`${dec.size*2}px ${dec.size*2}px`); // Gradient size needs to be box size
+                 bgSizes.push(`${dec.size*2}px ${dec.size*2}px`); 
             } else {
                  bgPositions.push('0 0');
                  bgSizes.push('100% 100%');
@@ -1428,7 +1774,6 @@ function update() {
         } else if (dec.type === 'image' && dec.url) {
             let rawUrl = dec.url.trim().replace(/^['"]|['"]$/g, '');
             let finalUrl = !/^\s*url\s*\(/i.test(rawUrl) ? `url('${rawUrl}')` : rawUrl;
-
             let imgStr = finalUrl;
             if (op < 1) {
                 imgStr = `-webkit-cross-fade(${finalUrl}, transparent, ${100 - op * 100}%)`;
@@ -1441,7 +1786,6 @@ function update() {
         }
     });
 
-    // 底纹 (Skin)
     if (assets.bg !== 'none') { 
         bgImages.push(assets.bg);
         bgPositions.push('center');
@@ -1450,14 +1794,12 @@ function update() {
         clips.push("padding-box"); 
     }
     
-    // Base Gradient
     bgImages.push(finalGrad);
     bgPositions.push('center');
     bgSizes.push('cover');
     bgRepeats.push('no-repeat');
     clips.push("padding-box");
 
-    // 边框逻辑
     let borderVal = "", outlineVal = "", outlineOffVal = "";
     if (isGb) {
         document.getElementById('stdBorderControls').style.display = 'none';
@@ -1493,126 +1835,83 @@ function update() {
         s.backdropFilter = `blur(${v('blur')}px)`;
         s.webkitBackdropFilter = `blur(${v('blur')}px)`;
         s.color = textColor;
-        
-        // 4-Way Padding
         s.padding = `${v('pt')}px ${v('pr')}px ${v('pb')}px ${v('pl')}px`;
-        
         s.backgroundImage = bgImageVal;
         s.backgroundPosition = bgPosVal;
         s.backgroundSize = bgSizeVal;
         s.backgroundRepeat = bgRepVal;
         s.backgroundClip = bgClipVal;
         s.backgroundBlendMode = bgBlendMode;
-        
         s.position = "relative"; 
         s.overflow = "visible"; 
-        
-        // 尺寸限制
         s.maxWidth = `${v('maxWidth')}%`;
         s.minWidth = `${v('minWidth')}px`;
         s.minHeight = `${v('minHeight')}px`;
-
         s.border = borderVal;
         s.outline = outlineVal;
         s.outlineOffset = outlineOffVal;
 
-        // 清除旧贴图
         t.querySelectorAll('.p-sticker-1, .p-sticker-2, .p-gb-border').forEach(el => el.remove());
 
-        // 预览流光边框
         if (isGb) {
             const gbDiv = document.createElement('div');
             gbDiv.className = 'p-gb-border';
             gbDiv.style.position = 'absolute';
-            gbDiv.style.inset = '0';
+            gbDiv.style.inset = '-' + v('bwidth') + 'px'; // <--- FIX FOR PREVIEW
             gbDiv.style.borderRadius = 'inherit';
             gbDiv.style.padding = v('bwidth') + 'px'; 
             gbDiv.style.pointerEvents = 'none';
             gbDiv.style.zIndex = '-1'; 
-            
             const gbC1 = hexToRgba(document.getElementById('gh1').value, v('gbA1'));
             const gbC2 = hexToRgba(document.getElementById('gh2').value, v('gbA2'));
             const gbAngle = v('gbAngle');
-            
             gbDiv.style.background = `linear-gradient(${gbAngle}deg, ${gbC1}, ${gbC2})`;
             gbDiv.style.webkitMask = 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)';
             gbDiv.style.webkitMaskComposite = 'xor';
             gbDiv.style.maskComposite = 'exclude';
-            
             t.appendChild(gbDiv);
         }
 
-        // 预览贴图1 (After)
-        if (hasSticker1 && assets.sticker1) {
-            const img = document.createElement('div');
-            img.className = 'p-sticker-1';
-            img.style.position = 'absolute';
-            img.style.width = v('sticker1Size') + 'px';
-            img.style.height = v('sticker1Size') + 'px';
-            img.style.backgroundImage = assets.sticker1;
-            img.style.backgroundSize = 'contain';
-            img.style.backgroundRepeat = 'no-repeat';
-            img.style.opacity = v('sticker1Op'); 
-            img.style.zIndex = '20';
-            img.style.pointerEvents = 'none';
+        const renderSticker = (idx) => {
+             const size = v(`sticker${idx}Size`);
+             const op = v(`sticker${idx}Op`);
+             const pos = v(`sticker${idx}Pos`);
+             const x = parseFloat(v(`sticker${idx}X`));
+             const y = parseFloat(v(`sticker${idx}Y`));
+             const rot = v(`sticker${idx}Rot`);
+             const bg = assets[`sticker${idx}`];
+             if(!bg) return;
 
-            const pos = v('sticker1Pos');
-            const offX = parseFloat(v('sticker1X'));
-            const offY = parseFloat(v('sticker1Y'));
-            
-            if(pos.includes('c')) {
-                let base = 'left: 50%; top: 50%;';
-                let tr = 'translate(-50%, -50%)';
-                if(pos === 'tc') { base = 'left: 50%; top: 0;'; tr = 'translate(-50%, 0)'; }
-                if(pos === 'bc') { base = 'left: 50%; bottom: 0;'; tr = 'translate(-50%, 0)'; }
-                if(pos === 'lc') { base = 'left: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-                if(pos === 'rc') { base = 'right: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-                img.style.cssText += base;
-                img.style.transform = `${tr} translate(${offX}px, ${offY}px)`;
-            } else {
-                if(pos === 'br') { img.style.right = offX + 'px'; img.style.bottom = offY + 'px'; }
-                if(pos === 'bl') { img.style.left = offX + 'px'; img.style.bottom = offY + 'px'; }
-                if(pos === 'tr') { img.style.right = offX + 'px'; img.style.top = offY + 'px'; }
-                if(pos === 'tl') { img.style.left = offX + 'px'; img.style.top = offY + 'px'; }
-            }
-            t.appendChild(img);
-        }
+             const img = document.createElement('div');
+             img.className = `p-sticker-${idx}`;
+             img.style.position = 'absolute';
+             img.style.width = size + 'px';
+             img.style.height = size + 'px';
+             img.style.backgroundImage = bg;
+             img.style.backgroundSize = 'contain';
+             img.style.backgroundRepeat = 'no-repeat';
+             img.style.opacity = op;
+             img.style.zIndex = '20';
+             img.style.pointerEvents = 'none';
+             let baseTrans = "";
+             if(pos === 'tl') { img.style.left = '0'; img.style.top = '0'; }
+             else if(pos === 'tr') { img.style.right = '0'; img.style.top = '0'; }
+             else if(pos === 'bl') { img.style.left = '0'; img.style.bottom = '0'; }
+             else if(pos === 'br') { img.style.right = '0'; img.style.bottom = '0'; }
+             else if(pos === 'center') { 
+                 img.style.left = '50%'; img.style.top = '50%'; 
+                 baseTrans = "translate(-50%, -50%) "; 
+             }
+             else if(pos === 'tc') { img.style.left = '50%'; img.style.top = '0'; baseTrans = "translate(-50%, 0) "; }
+             else if(pos === 'bc') { img.style.left = '50%'; img.style.bottom = '0'; baseTrans = "translate(-50%, 0) "; }
+             else if(pos === 'lc') { img.style.left = '0'; img.style.top = '50%'; baseTrans = "translate(0, -50%) "; }
+             else if(pos === 'rc') { img.style.right = '0'; img.style.top = '50%'; baseTrans = "translate(0, -50%) "; }
+             img.style.transform = `${baseTrans}translate(${x}px, ${y}px) rotate(${rot}deg)`;
+             t.appendChild(img);
+        };
 
-        // 预览贴图2 (Before)
-        if (!isGb && hasSticker2 && assets.sticker2) {
-            const img = document.createElement('div');
-            img.className = 'p-sticker-2';
-            img.style.position = 'absolute';
-            img.style.width = v('sticker2Size') + 'px';
-            img.style.height = v('sticker2Size') + 'px';
-            img.style.backgroundImage = assets.sticker2;
-            img.style.backgroundSize = 'contain';
-            img.style.backgroundRepeat = 'no-repeat';
-            img.style.opacity = v('sticker2Op');
-            img.style.zIndex = '20';
-            img.style.pointerEvents = 'none';
-
-            const pos = v('sticker2Pos');
-            const offX = parseFloat(v('sticker2X'));
-            const offY = parseFloat(v('sticker2Y'));
-            
-            if(pos.includes('c')) {
-                let base = 'left: 50%; top: 50%;';
-                let tr = 'translate(-50%, -50%)';
-                if(pos === 'tc') { base = 'left: 50%; top: 0;'; tr = 'translate(-50%, 0)'; }
-                if(pos === 'bc') { base = 'left: 50%; bottom: 0;'; tr = 'translate(-50%, 0)'; }
-                if(pos === 'lc') { base = 'left: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-                if(pos === 'rc') { base = 'right: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-                img.style.cssText += base;
-                img.style.transform = `${tr} translate(${offX}px, ${offY}px)`;
-            } else {
-                if(pos === 'br') { img.style.right = offX + 'px'; img.style.bottom = offY + 'px'; }
-                if(pos === 'bl') { img.style.left = offX + 'px'; img.style.bottom = offY + 'px'; }
-                if(pos === 'tr') { img.style.right = offX + 'px'; img.style.top = offY + 'px'; }
-                if(pos === 'tl') { img.style.left = offX + 'px'; img.style.top = offY + 'px'; }
-            }
-            t.appendChild(img);
-        }
+        if (hasSticker1 && assets.sticker1) renderSticker(1);
+        if (!isGb && hasSticker2 && assets.sticker2) renderSticker(2);
     });
 
     const sel = v('selectorType');
@@ -1666,7 +1965,7 @@ function update() {
 ${selector}::before {
   content: '' !important;
   position: absolute !important;
-  inset: 0 !important;
+  inset: -${v('bwidth')}px !important; /* <--- FIX FOR EXPORT */
   border-radius: inherit !important;
   padding: ${v('bwidth')}px !important;
   background: linear-gradient(${gbAngle}deg, ${gbC1}, ${gbC2}) !important;
@@ -1682,90 +1981,63 @@ ${selector}::before {
   outline-offset: ${outlineOffVal} !important;\n}`;
     }
 
-    if (hasSticker1 && assets.sticker1) {
-        const sSize = v('sticker1Size');
-        const sPos = v('sticker1Pos');
-        const sX = v('sticker1X'); 
-        const sY = v('sticker1Y');
-        const sOp = v('sticker1Op');
+    const genStickerCSS = (idx, pseudo) => {
+        const size = v(`sticker${idx}Size`);
+        const op = v(`sticker${idx}Op`);
+        const pos = v(`sticker${idx}Pos`);
+        const x = v(`sticker${idx}X`); 
+        const y = v(`sticker${idx}Y`);
+        const rot = v(`sticker${idx}Rot`);
         
         let posCss = '';
-        if(sPos.includes('c')) {
-            let base = 'left: 50%; top: 50%;';
-            let tr = 'translate(-50%, -50%)';
-            if(sPos === 'tc') { base = 'left: 50%; top: 0;'; tr = 'translate(-50%, 0)'; }
-            if(sPos === 'bc') { base = 'left: 50%; bottom: 0;'; tr = 'translate(-50%, 0)'; }
-            if(sPos === 'lc') { base = 'left: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-            if(sPos === 'rc') { base = 'right: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-            posCss = `${base} transform: ${tr} translate(${sX}px, ${sY}px);`;
-        } else {
-            if(sPos === 'br') posCss = `right: ${sX}px; bottom: ${sY}px;`;
-            if(sPos === 'bl') posCss = `left: ${sX}px; bottom: ${sY}px;`;
-            if(sPos === 'tr') posCss = `right: ${sX}px; top: ${sY}px;`;
-            if(sPos === 'tl') posCss = `left: ${sX}px; top: ${sY}px;`;
-        }
-
-        css += `\n\n/* 贴图 1 (After) */
-${selector}::after {
-  content: '' !important;
-  position: absolute !important;
-  width: ${sSize}px !important;
-  height: ${sSize}px !important;
-  background-image: ${assets.sticker1} !important;
-  background-size: contain !important;
-  background-repeat: no-repeat !important;
-  opacity: ${sOp} !important;
-  ${posCss}
-  z-index: 20 !important;
-  pointer-events: none !important;
-}`;
-    }
-
-    if (!isGb && hasSticker2 && assets.sticker2) {
-         const sSize = v('sticker2Size');
-        const sPos = v('sticker2Pos');
-        const sX = v('sticker2X'); 
-        const sY = v('sticker2Y');
-        const sOp = v('sticker2Op');
+        let baseTrans = '';
         
-        let posCss = '';
-        if(sPos.includes('c')) {
-            let base = 'left: 50%; top: 50%;';
-            let tr = 'translate(-50%, -50%)';
-            if(sPos === 'tc') { base = 'left: 50%; top: 0;'; tr = 'translate(-50%, 0)'; }
-            if(sPos === 'bc') { base = 'left: 50%; bottom: 0;'; tr = 'translate(-50%, 0)'; }
-            if(sPos === 'lc') { base = 'left: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-            if(sPos === 'rc') { base = 'right: 0; top: 50%;'; tr = 'translate(0, -50%)'; }
-            posCss = `${base} transform: ${tr} translate(${sX}px, ${sY}px);`;
-        } else {
-            if(sPos === 'br') posCss = `right: ${sX}px; bottom: ${sY}px;`;
-            if(sPos === 'bl') posCss = `left: ${sX}px; bottom: ${sY}px;`;
-            if(sPos === 'tr') posCss = `right: ${sX}px; top: ${sY}px;`;
-            if(sPos === 'tl') posCss = `left: ${sX}px; top: ${sY}px;`;
-        }
+        if(pos === 'tl') { posCss = 'left:0; top:0;'; }
+        else if(pos === 'tr') { posCss = 'right:0; top:0;'; }
+        else if(pos === 'bl') { posCss = 'left:0; bottom:0;'; }
+        else if(pos === 'br') { posCss = 'right:0; bottom:0;'; }
+        else if(pos === 'center') { posCss = 'left:50%; top:50%;'; baseTrans = 'translate(-50%, -50%) '; }
+        else if(pos === 'tc') { posCss = 'left:50%; top:0;'; baseTrans = 'translate(-50%, 0) '; }
+        else if(pos === 'bc') { posCss = 'left:50%; bottom:0;'; baseTrans = 'translate(-50%, 0) '; }
+        else if(pos === 'lc') { posCss = 'left:0; top:50%;'; baseTrans = 'translate(0, -50%) '; }
+        else if(pos === 'rc') { posCss = 'right:0; top:50%;'; baseTrans = 'translate(0, -50%) '; }
 
-        css += `\n\n/* 贴图 2 (Before) */
-${selector}::before {
+        return `\n\n/* 贴图 ${idx} (${pseudo}) */
+${selector}::${pseudo} {
   content: '' !important;
   position: absolute !important;
-  width: ${sSize}px !important;
-  height: ${sSize}px !important;
-  background-image: ${assets.sticker2} !important;
+  width: ${size}px !important;
+  height: ${size}px !important;
+  background-image: ${assets['sticker'+idx]} !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
-  opacity: ${sOp} !important;
+  opacity: ${op} !important;
   ${posCss}
+  transform: ${baseTrans}translate(${x}px, ${y}px) rotate(${rot}deg) !important;
   z-index: 20 !important;
   pointer-events: none !important;
-  border: none !important; 
-  background-color: transparent !important; 
+  ${pseudo==='before' ? 'border: none !important; background-color: transparent !important;' : ''}
 }`;
+    };
+
+    if (hasSticker1 && assets.sticker1) css += genStickerCSS(1, 'after');
+    if (!isGb && hasSticker2 && assets.sticker2) css += genStickerCSS(2, 'before');
+    
+    // Append Transfer CSS
+    const transferCSSContent = document.getElementById('dynamic-transfer-css').innerHTML;
+    if (transferCSSContent) {
+        // Strip out demo selectors to make it production ready for user
+        const cleanTransferCSS = transferCSSContent
+            .replace(/, \.transfer-card-demo/g, '')
+            .replace(/, #tDemoTitle/g, '')
+            .replace(/, \.transfer-card-demo > \*/g, '');
+            
+        css += `\n\n/* -------- 转账卡片美化 -------- */${cleanTransferCSS}`;
     }
 
     codeOut.innerText = css;
 }
 
-// 新增：渲染链接修复面板
 function renderUrlFixPanel() {
     const panel = document.getElementById('urlFixPanel');
     const list = document.getElementById('urlFixList');
@@ -1773,7 +2045,6 @@ function renderUrlFixPanel() {
     
     let hasImages = false;
 
-    // 1. 检查背景图
     if(assets.bg && assets.bg !== 'none') {
         hasImages = true;
         addUrlInput(list, '底纹背景 (Skin)', assets.bg, (val) => {
@@ -1782,7 +2053,6 @@ function renderUrlFixPanel() {
         });
     }
 
-    // 2. 检查贴图1
     if(document.getElementById('sticker1Switch').checked && assets.sticker1) {
         hasImages = true;
         addUrlInput(list, '贴图 1 (Sticker)', assets.sticker1, (val) => {
@@ -1791,7 +2061,6 @@ function renderUrlFixPanel() {
         });
     }
 
-    // 3. 检查贴图2
     if(document.getElementById('sticker2Switch').checked && assets.sticker2 && !document.getElementById('gradBorderSwitch').checked) {
         hasImages = true;
         addUrlInput(list, '贴图 2 (Aux)', assets.sticker2, (val) => {
@@ -1800,13 +2069,30 @@ function renderUrlFixPanel() {
         });
     }
 
-    // 4. 检查装饰层
+    // Transfer BG
+    if(assets.tBg && assets.tBg !== 'none') {
+        hasImages = true;
+        addUrlInput(list, '转账背景', assets.tBg, (val) => {
+             assets.tBg = formatUrl(val);
+             updateTransferCSS();
+        });
+    }
+    
+    // Transfer Deco
+    if(document.getElementById('tDecoSwitch').checked && assets.tDeco && assets.tDeco !== 'none') {
+         hasImages = true;
+         addUrlInput(list, '转账纹理', assets.tDeco, (val) => {
+             assets.tDeco = formatUrl(val);
+             updateTransferCSS();
+        });
+    }
+
     decorations.forEach((d, i) => {
         if(d.type === 'image') {
             hasImages = true;
             addUrlInput(list, `装饰层 ${i+1} (Deco)`, d.url, (val) => {
-                d.url = val; // 装饰层逻辑特殊，这里存原始值，update里会处理url()包裹
-                renderDecorationList(); // 同步更新UI列表
+                d.url = val; 
+                renderDecorationList(); 
                 update();
             });
         }
@@ -1816,30 +2102,22 @@ function renderUrlFixPanel() {
 }
 
 function addUrlInput(container, label, currentVal, onChange) {
-    // 提取纯净URL用于显示 (去除 url('...'))
     let displayVal = currentVal.replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
-    
     const row = document.createElement('div');
     row.style.display = 'flex';
     row.style.alignItems = 'center';
     row.style.gap = '8px';
-    
     row.innerHTML = `
         <span style="font-size:11px; color:#666; width:90px; flex-shrink:0;">${label}</span>
         <input type="text" value="${displayVal}" 
             style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:11px; font-family:'Menlo',monospace;"
             onchange="this.style.borderColor='#34c759';">
     `;
-    
     const input = row.querySelector('input');
-    input.oninput = (e) => {
-        onChange(e.target.value);
-    };
-    
+    input.oninput = (e) => { onChange(e.target.value); };
     container.appendChild(row);
 }
 
-// 辅助：统一格式化为 url(...)
 function formatUrl(val) {
     if(!val) return '';
     let raw = val.trim();
@@ -1850,8 +2128,9 @@ function formatUrl(val) {
 window.addEventListener('load', () => {
     const savedCanvas = localStorage.getItem('eve_canvas_mode_final');
     if(savedCanvas) setCanvas(savedCanvas);
-    if (!loadState()) { applyPreset('classic'); } else { update(); }
-    setTimeout(update, 100); 
+    if (!loadState()) { applyPreset('classic'); } else { update(); updateTransferCSS(); }
+document.querySelectorAll('.sim-transfer-row').forEach(el => el.style.display = 'none');
+setTimeout(update, 100);
 });
 </script>
 </body>
