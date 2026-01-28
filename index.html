@@ -788,7 +788,7 @@
         <select id="tShape" class="save-state" onchange="updateTransferCSS()">
             <option value="default">矩形/圆角 (Rectangle)</option>
             <option value="circle">正圆 (Circle)</option>
-            <option value="diamond">菱形 (Diamond)</option>
+            <option value="diamond">菱形（文字选居中） (Diamond)</option>
         </select>
         
         <!-- 宽高控制 (只有这里有 ID，JS才能找到) -->
@@ -1707,7 +1707,7 @@ function updateTransferCSS() {
     if (v('tShape') === 'default') {
         shapeCSS = `width: ${w} !important; height: ${h} !important; border-radius: ${v('tRadius')}px !important;`;
     } else if (v('tShape') === 'circle') {
-        shapeCSS = `width: 220px !important; height: 220px !important; border-radius: 50% !important; aspect-ratio: 1/1 !important;`;
+        shapeCSS = `width: 180px !important; height: 180px !important; border-radius: 50% !important; aspect-ratio: 1/1 !important;`;
     } else if (v('tShape') === 'diamond') {
         shapeCSS = `width: 200px !important; height: 200px !important; transform: rotate(45deg) !important; margin: 30px !important;`;
         childTrans = `transform: rotate(-45deg) !important;`;
