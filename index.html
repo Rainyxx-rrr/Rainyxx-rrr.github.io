@@ -74,7 +74,28 @@
             height: 100%; border-bottom: 2px solid transparent; flex-shrink: 0;
         }
         .tab-btn.active { color: var(--primary); font-weight: 600; border-bottom-color: var(--primary); background: #fff; }
-        .reset-btn {
+      /* 新增的历史记录按钮样式 */
+.history-controls {
+    display: flex;
+    height: 100%;
+    border-left: 1px solid var(--border);
+}
+.history-btn {
+    padding: 0 12px !important;
+    font-size: 12px !important; 
+    color: #666;
+}
+.history-btn:hover {
+    color: var(--primary);
+    background: #f5f7fa;
+}
+/* 禁用状态 */
+.history-btn.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+    color: #ccc;
+} 
+ .reset-btn {
             padding: 0 15px; height: 100%; border: none; background: none; 
             cursor: pointer; font-size: 12px; font-weight: 600; color: var(--danger); 
             border-left: 1px solid var(--border); white-space: nowrap; flex-shrink: 0;
@@ -222,8 +243,8 @@
         
         /* TRANSFER CARD DEMO STYLES */
         .transfer-card-demo, .transfer-card {
-            width: 230px; 
-            height: 150px;
+            width: 200px; 
+            height: 100px;
             background: #fa9d3b; /* Fallback */
             border-radius: 12px;
             position: relative;
@@ -264,6 +285,15 @@
                 <button class="tab-btn" onclick="switchTab(4)">模拟</button>
                 <button class="tab-btn" onclick="switchTab(5)">导出</button>
             </div>
+<!-- 在 <div class="tab-header"> 内部，<button class="reset-btn"...> 之前添加 -->
+<div class="history-controls">
+    <button class="tab-btn history-btn" onclick="performUndo()" title="撤销 (Ctrl+Z)">
+        <span style="transform: scaleX(-1); display:inline-block;">➜</span> 撤销
+    </button>
+    <button class="tab-btn history-btn" onclick="performRedo()" title="重做 (Ctrl+Y)">
+        ➜ 重做
+    </button>
+</div>
             <button class="reset-btn" onclick="resetMemory()" title="恢复默认设置">重置</button>
         </div>
 
@@ -559,13 +589,14 @@
                 <div class="label-text" style="margin-bottom:8px;">上传气泡底纹 (Skin)</div>
                 <input type="file" onchange="uploadImg(this, 'bg')" style="font-size:12px;">
                 <div class="warn-box" style="margin-top:10px;">
-                    <strong>修复说明：</strong> 已移除可能导致"变绿"的蒙版逻辑。现在直接作为背景层渲染。如需半透明，请直接上传PNG图片或使用下方混合模式。
+                    <strong>修复说明：</strong> 现在直接作为背景层渲染。如需半透明，请直接上传PNG图片或使用下方混合模式。
                 </div>
                 <div style="margin-top:15px;">
                     <div class="label-text" style="margin-bottom:5px;">或输入图片 URL</div>
                     <div style="display:flex; gap:5px;">
                         <input type="text" id="bgUrlInput" placeholder="https://..." style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
                         <button onclick="applyBgUrl()" style="border:1px solid #ddd; background:#f5f5f7; border-radius:4px; cursor:pointer; font-size:12px; padding:0 12px;">应用</button>
+    <button onclick="clearImageAsset('bg')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;" title="清除图片">🗑️</button>
                     </div>
                 </div>
 
@@ -600,6 +631,7 @@
                     <div style="display:flex; gap:6px;">
                         <input type="text" id="sticker1UrlInput" placeholder="http://..." style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
                         <button onclick="applyStickerUrl(1)" style="border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;">应用</button>
+<button onclick="clearImageAsset('sticker1')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;" title="清除图片">🗑️</button>
                     </div>
 
                     <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点</span></div>
@@ -670,6 +702,7 @@
                     <div style="display:flex; gap:6px;">
                         <input type="text" id="sticker2UrlInput" placeholder="http://..." style="flex:1; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
                         <button onclick="applyStickerUrl(2)" style="border:1px solid #ddd; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;">应用</button>
+<button onclick="clearImageAsset('sticker2')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;" title="清除图片">🗑️</button>
                     </div>
 
                     <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点</span></div>
@@ -740,93 +773,143 @@
         </div>
         
         <!-- Tab 7: 转账 (NEW) -->
-        <div class="tab-content" id="tab7">
-            <h2>转账卡片设置</h2>
-            
-            <!-- Shape -->
-            <div class="control-group">
-                <div class="label-row"><span class="label-text">卡片形态 (Shape)</span></div>
-                <select id="tShape" class="save-state" onchange="updateTransferCSS()">
-                    <option value="default">默认圆角 (Rectangle)</option>
-                    <option value="circle">正圆 (Circle)</option>
-                    <option value="diamond">菱形 (Diamond)</option>
-                    <option value="hexagon">六边形 (Hexagon)</option>
-                </select>
-                <div id="tRadiusControl" style="margin-top:10px;">
-                    <div class="label-row"><span class="label-text">圆角半径</span><span class="label-val" id="val-tRadius">12px</span></div>
-                    <input type="range" id="tRadius" class="save-state" min="0" max="100" value="12" oninput="updateTransferCSS()">
-                </div>
-            </div>
+       <!-- Tab 7: 转账 (NEW) - 完全替换版 -->
+<div class="tab-content" id="tab7">
+    <h2>转账卡片设置</h2>
+    
+    <!-- 1. 顶部：一键同步 + 形状 + 尺寸 -->
+    <div class="control-group">
+        <div class="label-row" style="margin-bottom:10px;">
+            <span class="label-text">快捷工具 & 颜色（同步后无法使用图片背景，最多只有两种颜色，若超出则选取前两种。）</span>
+            <button onclick="syncBubbleStyle()" style="font-size:11px; padding:4px 8px; border:1px solid var(--primary); color:var(--primary); background:#fff; border-radius:4px; cursor:pointer;">⚡ 同步气泡配色</button>
+        </div>
 
-            <!-- Background -->
-            <div class="control-group">
-                <div class="label-row"><span class="label-text">背景图层 (Background)</span></div>
-                <input type="file" onchange="uploadImg(this, 'tBg')" style="font-size:12px; margin-bottom:5px;">
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <input type="text" id="tBgUrl" placeholder="背景图片 URL" class="save-state" style="flex:1; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
-                    <button onclick="updateTransferCSS()" style="font-size:11px; padding:0 8px;">应用</button>
-                </div>
-                <div class="label-row" style="margin-top:5px;"><span class="label-text">背景适配</span></div>
-                <select id="tBgSize" class="save-state" onchange="updateTransferCSS()">
-                    <option value="cover">填充 (Cover)</option>
-                    <option value="contain">适应 (Contain)</option>
-                </select>
-                
-                <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
-                    <span class="label-text">叠加渐变 (Gradient Overlay)</span>
-                    <input type="checkbox" id="tGradSwitch" class="save-state" onchange="updateTransferCSS()">
-                </div>
-                <div id="tGradControls" style="display:none; margin-top:5px; background:#f5f5f7; padding:10px; border-radius:8px;">
-                     <div class="color-row">
-                        <input type="color" id="tGc1" value="#ff6b9d" class="save-state" oninput="updateTransferCSS()">
-                        <input type="color" id="tGc2" value="#fecfe9" class="save-state" oninput="updateTransferCSS()">
-                     </div>
-                     <div class="label-row" style="margin-top:5px;"><span class="label-text">不透明度</span></div>
-                     <input type="range" id="tGradOp" class="save-state" min="0" max="1" step="0.05" value="0.7" oninput="updateTransferCSS()">
-                </div>
+        <div class="label-row"><span class="label-text">卡片形态</span></div>
+        <select id="tShape" class="save-state" onchange="updateTransferCSS()">
+            <option value="default">矩形/圆角 (Rectangle)</option>
+            <option value="circle">正圆 (Circle)</option>
+            <option value="diamond">菱形 (Diamond)</option>
+        </select>
+        
+        <!-- 宽高控制 (只有这里有 ID，JS才能找到) -->
+        <div id="tSizeControls" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+            <div>
+                <div class="label-row"><small>宽度 (Width)</small><span class="label-val" id="val-tWidth">200</span></div>
+                <input type="range" id="tWidth" class="save-state" min="150" max="240" value="200" oninput="updateTransferCSS()">
             </div>
-
-            <!-- Decoration -->
-            <div class="control-group">
-                <div class="label-row">
-                    <span class="label-text">纹理装饰 (::before)</span>
-                    <input type="checkbox" id="tDecoSwitch" class="save-state" onchange="updateTransferCSS()">
-                </div>
-                <div id="tDecoControls" style="display:none; margin-top:5px;">
-                    <input type="file" onchange="uploadImg(this, 'tDeco')" style="font-size:12px; margin-bottom:5px;">
-                    <input type="text" id="tDecoUrl" placeholder="纹理图片 URL" class="save-state" style="width:100%; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px; margin-bottom:5px;" onchange="updateTransferCSS()">
-                    <div class="label-row"><span class="label-text">不透明度</span></div>
-                    <input type="range" id="tDecoOp" class="save-state" min="0" max="1" step="0.05" value="0.3" oninput="updateTransferCSS()">
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div class="control-group">
-                <div class="label-row"><span class="label-text">内容设置 (Content)</span></div>
-                <div class="label-row"><span class="label-text" style="font-weight:400">全局文字颜色</span></div>
-                <div class="color-wrapper">
-                    <input type="color" id="tTextColor" value="#ffffff" class="save-state" oninput="updateTransferCSS()">
-                </div>
-                
-                <div class="label-row" style="margin-top:15px; border-top: 1px dashed #eee; padding-top: 10px;">
-                    <span class="label-text">修改标题内容和文字颜色有bug别用。</span>
-                    <input type="checkbox" id="tContentSwitch" class="save-state" onchange="updateTransferCSS()">
-                </div>
-
-                <div id="tContentControls" style="display:none;">
-                    <div class="label-row" style="margin-top:10px;"><span class="label-text">覆写标题内容</span></div>
-                    <input type="text" id="tTitleText" class="save-state" placeholder="你发起的转账" value="你发起的转账" oninput="updateTransferCSS()" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
-                    
-                    <div class="label-row" style="margin-top:10px;"><span class="label-text">标题字号</span></div>
-                    <input type="range" id="tTitleSize" class="save-state" min="10" max="30" value="14" oninput="updateTransferCSS()">
-                </div>
-            </div>
-            
-             <!-- ★★★ 新增：确认按钮 ★★★ -->
-            <div class="control-group" style="margin-top:20px; border-top:1px dashed #eee; padding-top:15px;">
-                <button class="copy-btn-main" onclick="applyTransferToSim()">✅ 确定并生成到模拟对话</button>
+            <div>
+                <div class="label-row"><small>高度 (Height)</small><span class="label-val" id="val-tHeight">100</span></div>
+                <input type="range" id="tHeight" class="save-state" min="80" max="300" value="100" oninput="updateTransferCSS()">
             </div>
         </div>
+
+        <div id="tRadiusControl" style="margin-top:10px;">
+            <div class="label-row"><span class="label-text">圆角半径</span><span class="label-val" id="val-tRadius">12px</span></div>
+            <input type="range" id="tRadius" class="save-state" min="0" max="60" value="12" oninput="updateTransferCSS()">
+        </div>
+    </div>
+
+    <!-- 2. 背景设置 -->
+    <div class="control-group">
+        <div class="label-row"><span class="label-text">背景图层</span></div>
+        <input type="file" onchange="uploadImg(this, 'tBg')" style="font-size:12px; margin-bottom:5px;"><button onclick="clearImageAsset('tBg')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 10px;">清除</button>
+        <input type="text" id="tBgUrl" placeholder="背景图片 URL" class="save-state" style="flex:1; width:100%; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+        
+        <div class="label-row" style="margin-top:5px;"><span class="label-text">背景适配</span></div>
+        <select id="tBgSize" class="save-state" onchange="updateTransferCSS()">
+            <option value="cover">填充 (Cover)</option>
+            <option value="contain">适应 (Contain)</option>
+        </select>
+        
+        <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
+            <span class="label-text">叠加渐变颜色</span>
+            <input type="checkbox" id="tGradSwitch" class="save-state" onchange="updateTransferCSS()">
+        </div>
+        <div id="tGradControls" style="display:none; margin-top:5px; background:#f5f5f7; padding:10px; border-radius:8px;">
+             <div class="color-row">
+                <input type="color" id="tGc1" value="#ff6b9d" class="save-state" oninput="updateTransferCSS()">
+                <input type="color" id="tGc2" value="#fecfe9" class="save-state" oninput="updateTransferCSS()">
+             </div>
+             <div class="label-row" style="margin-top:5px;"><span class="label-text">渐变角度</span></div>
+             <input type="range" id="tGradAng" class="save-state" min="0" max="360" value="135" oninput="updateTransferCSS()">
+             <div class="label-row"><span class="label-text">不透明度</span></div>
+             <input type="range" id="tGradOp" class="save-state" min="0" max="1" step="0.05" value="0.7" oninput="updateTransferCSS()">
+        </div>
+    </div>
+
+    <!-- 3. 纹理装饰 (::before) -->
+    <div class="control-group">
+        <div class="label-row">
+            <span class="label-text">纹理装饰 (超出的部分会被裁剪)</span>
+            <input type="checkbox" id="tDecoSwitch" class="save-state" onchange="updateTransferCSS()">
+<button onclick="clearImageAsset('tDeco')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 10px;">清除</button>
+        </div>
+        <div id="tDecoControls" style="display:none; margin-top:5px; background:#f9f9fa; padding:10px; border-radius:8px;">
+            <input type="file" onchange="uploadImg(this, 'tDeco')" style="font-size:12px; margin-bottom:5px;">
+            <input type="text" id="tDecoUrl" placeholder="纹理 URL" class="save-state" style="width:100%; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+            
+            <div class="label-row" style="margin-top:10px;"><span class="label-text">不透明度</span></div>
+            <input type="range" id="tDecoOp" class="save-state" min="0" max="1" step="0.05" value="0.3" oninput="updateTransferCSS()">
+
+            <div class="label-row" style="margin-top:10px;"><span class="label-text">大小 (Scale %)</span><span class="label-val" id="val-tDecoSize">100</span></div>
+            <input type="range" id="tDecoSize" class="save-state" min="10" max="300" value="100" oninput="updateTransferCSS()">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <div><small>X 偏移</small><input type="range" id="tDecoX" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()"></div>
+                <div><small>Y 偏移</small><input type="range" id="tDecoY" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()"></div>
+            </div>
+            
+            <div class="label-row" style="margin-top:10px;"><span class="label-text">旋转</span><span class="label-val" id="val-tDecoRot">0°</span></div>
+            <input type="range" id="tDecoRot" class="save-state" min="-180" max="180" value="0" oninput="updateTransferCSS()">
+        </div>
+    </div>
+
+    <!-- 4. 内容与排版 (核心修改) -->
+    <div class="control-group">
+        <div class="label-row"><span class="label-text">排版布局 & 内容</span></div>
+        
+        <!-- 对齐按钮 (HTML必须有这些ID) -->
+        <div class="role-switcher" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom:12px;">
+            <button class="role-btn active" id="btn-ta-left" onclick="setTAlign('flex-start', this)">靠左</button>
+            <button class="role-btn" id="btn-ta-center" onclick="setTAlign('center', this)">居中</button>
+            <button class="role-btn" id="btn-ta-right" onclick="setTAlign('flex-end', this)">靠右</button>
+        </div>
+        <input type="hidden" id="tAlign" class="save-state" value="flex-start">
+
+        <!-- 间距控制 -->
+        <div class="label-row"><span class="label-text">间距：标题 — 金额</span></div>
+        <input type="range" id="tGap1" class="save-state" min="0" max="100" value="10" oninput="updateTransferCSS()">
+        
+        <div class="label-row" style="margin-top:8px;"><span class="label-text">间距：金额 — 备注</span></div>
+        <input type="range" id="tGap2" class="save-state" min="0" max="100" value="10" oninput="updateTransferCSS()">
+        
+        <div class="label-row" style="margin-top:8px;"><span class="label-text">整体内边距</span></div>
+        <input type="range" id="tPad" class="save-state" min="0" max="60" value="15" oninput="updateTransferCSS()">
+
+        <!-- 文字颜色与替换 -->
+        <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
+            <span class="label-text">全局文字颜色</span>
+        </div>
+        <div class="color-wrapper">
+            <input type="color" id="tTextColor" value="#ffffff" class="save-state" oninput="updateTransferCSS()">
+        </div>
+
+        <div class="label-row" style="margin-top:10px;">
+            <span class="label-text">修改标题内容</span>
+            <input type="checkbox" id="tContentSwitch" class="save-state" onchange="updateTransferCSS()">
+        </div>
+        <div id="tContentControls" style="display:none; margin-top:5px;">
+            <input type="text" id="tTitleText" class="save-state" placeholder="标题内容" value="你发起的转账" oninput="updateTransferCSS()" style="width:100%; padding:6px; border:1px solid #ddd; border-radius:4px; font-size:12px;">
+            <div class="label-row" style="margin-top:5px;"><span class="label-text">标题字号</span></div>
+            <input type="range" id="tTitleSize" class="save-state" min="10" max="30" value="14" oninput="updateTransferCSS()">
+        </div>
+    </div>
+    
+    <!-- 5. 确认按钮 -->
+    <div class="control-group" style="margin-top:20px;">
+        <button class="copy-btn-main" onclick="applyTransferToSim()">✅ 生成到模拟对话</button>
+    </div>
+</div>
 
         <!-- Tab 4: 模拟 -->
         <div class="tab-content" id="tab4">
@@ -886,53 +969,53 @@
                 Hi! 这里是预览。
             </div>
             
-            <!-- Transfer Mockup -->
-            <div class="transfer-card-demo" id="transferDemo" style="display:none;">
-                <div class="transfer-icon-area">
-                    <div class="icon-symbol">¥</div>
+              <div class="transfer-card-demo" id="transferDemo" style="display:none;">
+                <!-- 标题行：图标 + 文字 -->
+                <div class="transfer-title" id="tDemoTitle">
+                    <!-- 圆圈图标 -->
+                    <i class="t-icon-bg">💖</i>
+                    <!-- 原标题文字 -->
+                    <span>转账给朋友</span>
                 </div>
-                <div class="transfer-info-area">
-                    <div class="transfer-amount">¥ 520.00</div>
-                    <div class="transfer-title" id="tDemoTitle">你发起的转账</div>
-                </div>
-                <div class="transfer-footer">微信转账</div>
-            </div>
+                <!-- 金额 -->
+                <div class="transfer-amount">¥ 520.00</div>
+                <!-- 备注 -->
+                <div class="transfer-note">转账</div>
+</div>
 
-             <!-- Chat Container (Modified with Transfer slots) -->
-             <div class="chat-container" id="chatSim" style="display:none;">
-                <!-- 1. 左侧：短消息 -->
-                <div class="chat-row left sim-row-left">
-                    <div class="chat-avatar"></div>
-                    <div class="chat-bubble-gray sim-bubble-left">短</div>
-                </div>
-
-                <!-- ★★★ 隐藏位：对方发来的转账 (左侧) ★★★ -->
-                <!-- 平时隐藏，点击确定按钮后显示 -->
-                <div class="chat-row left sim-transfer-row" style="display:none;">
-                    <div class="chat-avatar"></div>
-                    <div class="transfer-card t-card-target"></div>
-                </div>
-
-                <!-- 2. 右侧：正常长度消息 -->
-                <div class="chat-row right sim-row-right">
-                    <div class="chat-avatar"></div>
-                    <div class="preview-bubble sim-bubble-right">正常长度</div>
-                </div>
-
-                <!-- ★★★ 隐藏位：我发出的转账 (右侧) ★★★ -->
-                <!-- 平时隐藏，点击确定按钮后显示 -->
-                <div class="chat-row right sim-transfer-row" style="display:none;">
-                    <div class="chat-avatar"></div>
-                    <div class="transfer-card t-card-target"></div>
-                </div>
-
-                <!-- 3. 右侧：特别长的消息 -->
-                <div class="chat-row right sim-row-right"> 
-                    <div class="chat-avatar" style="visibility:hidden"></div>
-                    <div class="preview-bubble sim-bubble-right">这是一个特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别特别长的消息</div>
-                </div>
-            </div>
+     <!-- ★★★ 3. 聊天模拟容器 ★★★ -->
+     <div class="chat-container" id="chatSim" style="display:none;">
+        <!-- 左侧消息 -->
+        <div class="chat-row left sim-row-left">
+            <div class="chat-avatar"></div>
+            <div class="chat-bubble-gray sim-bubble-left">短</div>
         </div>
+
+        <!-- 左侧转账 (隐藏位) -->
+        <div class="chat-row left sim-transfer-row" style="display:none;">
+            <div class="chat-avatar"></div>
+            <div class="transfer-card t-card-target"></div>
+        </div>
+
+        <!-- 右侧消息 -->
+        <div class="chat-row right sim-row-right">
+            <div class="chat-avatar"></div>
+            <div class="preview-bubble sim-bubble-right">正常长度是这样</div>
+        </div>
+
+        <!-- 右侧转账 (隐藏位) -->
+        <div class="chat-row right sim-transfer-row" style="display:none;">
+            <div class="chat-avatar"></div>
+            <div class="transfer-card t-card-target"></div>
+        </div>
+
+        <!-- 右侧长消息 -->
+        <div class="chat-row right sim-row-right"> 
+            <div class="chat-avatar" style="visibility:hidden"></div>
+            <div class="preview-bubble sim-bubble-right">这是一个特别特别长长长长长长长长长长长长长长长长长长长长长长长长的消息测试</div>
+        </div>
+    </div>
+</div>
     </div>
 </div>
 
@@ -940,7 +1023,7 @@
     <span>UI Modify by <strong>2367304947</strong></span>
     <span class="divider">|</span>
     <span>Original Core by <strong>鲷鱼烧</strong></span>
-    <div class="license-note">禁止二传 / 禁止倒卖</div>
+    <div class="license-note">免费分享 / 禁止倒卖</div>
 </div>
 
 <script>
@@ -1197,12 +1280,12 @@ function renderDecorationList() {
 
 
 const configs = {
-    classic: { count:1, type:'none', alpha: 1, radius: 18, bwidth: 1.5, bstyle:'dashed', boffset:-6, shadow: 8, inset: 0, blur: 0, pady: 10, padx: 12, colors: ['#ffffff'], gb: false },
-    glass: { count:1, type:'linear', alpha: 0.35, radius: 18, bwidth: 1, bstyle:'solid', boffset:0, shadow: 20, inset: 0, blur: 18, pady: 12, padx: 16, colors: ['#ffffff'], gb: false },
-    raindrop: { count:2, type:'radial', alpha: 0.25, radius: 35, bwidth: 0, bstyle:'solid', boffset:0, shadow: 25, inset: 22, blur: 6, pady: 14, padx: 18, colors: ['#ffffff', '#e0f7fa'], gb: false },
-    pearl: { count:3, type:'radial', alpha: 1, radius: 50, bwidth: 0, bstyle:'solid', boffset:0, shadow: 18, inset: 32, blur: 0, pady: 12, padx: 16, colors: ['#ffffff', '#f8f8f8', '#d0d0d0'], gb: false },
-    gradient: { count:2, type:'linear', alpha: 1, radius: 16, bwidth: 0, bstyle:'solid', boffset:0, shadow: 12, inset: 0, blur: 0, pady: 12, padx: 16, colors: ['#a18cd1', '#fbc2eb'], gb: false },
-    dark: { count:1, type:'linear', alpha: 0.95, radius: 14, bwidth: 0, bstyle:'solid', boffset:0, shadow: 25, inset: 6, blur: 0, pady: 12, padx: 16, colors: ['#1c1c1e'], gb: false },
+    classic: { count:1, type:'none', alpha: 1, radius: 0, bwidth: 0, bstyle:'solid', boffset:0, shadow: 0, inset: 0, blur: 0, pady: 8, padx: 10, colors: ['#ffffff'], gb: false },
+    glass: { count:1, type:'linear', alpha: 0.35, radius: 18, bwidth: 1, bstyle:'solid', boffset:0, shadow: 20, inset: 0, blur: 18, pady: 8, padx: 10, colors: ['#ffffff'], gb: false },
+   raindrop: { count:2, type:'radial', alpha: 0.25, radius: 35, bwidth: 0, bstyle:'solid', boffset:0, shadow: 25, inset: 22, blur: 6, pady: 8, padx: 10, colors: ['#ffffff', '#e0f7fa'], gb: false },
+    pearl: { count:3, type:'radial', alpha: 1, radius: 50, bwidth: 0, bstyle:'solid', boffset:0, shadow: 18, inset: 32, blur: 0, pady: 8, padx: 10, colors: ['#ffffff', '#f8f8f8', '#d0d0d0'], gb: false },
+    gradient: { count:2, type:'linear', alpha: 1, radius: 16, bwidth: 0, bstyle:'solid', boffset:0, shadow: 12, inset: 0, blur: 0, pady: 8, padx: 10, colors: ['#a18cd1', '#fbc2eb'], gb: false },
+    dark: { count:1, type:'linear', alpha: 0.95, radius: 14, bwidth: 0, bstyle:'solid', boffset:0, shadow: 25, inset: 6, blur: 0, pady: 8, padx: 10, colors: ['#1c1c1e'], gb: false },
     custom: null
 };
 
@@ -1300,6 +1383,33 @@ function updatePad(axis) {
         document.getElementById('pb').value = val;
     }
     update();
+}
+
+
+function clearImageAsset(key) {
+    
+    assets[key] = 'none';
+    
+    let urlInputId = '';
+    if (key === 'bg') urlInputId = 'bgUrlInput';
+    else if (key === 'sticker1') urlInputId = 'sticker1UrlInput';
+    else if (key === 'sticker2') urlInputId = 'sticker2UrlInput';
+    else if (key === 'tBg') urlInputId = 'tBgUrl';
+    else if (key === 'tDeco') urlInputId = 'tDecoUrl';
+    
+    if (urlInputId) {
+        const input = document.getElementById(urlInputId);
+        if (input) input.value = '';
+    }
+    
+    
+    
+    
+    if (key.startsWith('t')) {
+        updateTransferCSS(); // 如果是转账相关的图片
+    } else {
+        update(); // 普通气泡图片
+    }
 }
 
 function uploadImg(input, key) {
@@ -1459,6 +1569,7 @@ function copyCSS() {
     }
 }
 
+
 const pad = document.getElementById('gradPad');
 const point = document.getElementById('gradPoint');
 const line = document.getElementById('gradLine');
@@ -1485,128 +1596,248 @@ function updateGradPos(e) {
 }
 
 /* ---------------- TRANSFER LOGIC ---------------- */
-/* ---------------- 修复后的转账逻辑 ---------------- */
-function updateTransferCSS() {
-    const v = (id) => { const el = document.getElementById(id); return el ? (el.type==='checkbox'?el.checked:el.value) : ''; };
+// ★★★ 适配新版 HTML 结构的同步函数 ★★★
+function applyTransferToSim() {
+    // 1. 获取预览卡片的 HTML
+    var demoContent = document.getElementById('transferDemo').innerHTML;
     
-    // 切换控制面板的显示状态
+    // 2. 填充到模拟对话中
+    var targets = document.querySelectorAll('.t-card-target');
+    targets.forEach(function(el) {
+        // 清空并重新填充，防止重复
+        el.innerHTML = demoContent;
+        
+        // 确保模拟卡片也有正确的类名以便应用样式
+        // (保持 transfer-card 类名不动，只更新内部结构)
+    });
+
+    // 3. 显示转账行
+    var rows = document.querySelectorAll('.sim-transfer-row');
+    rows.forEach(function(el) {
+        el.style.display = 'flex';
+    });
+
+    // 4. 跳转
+    switchTab(4);
+}
+
+/* -------- 转账卡片功能区 (New) -------- */
+
+// 1. 设置对齐方式
+function setTAlign(val, btn) {
+    document.getElementById('tAlign').value = val;
+    // 按钮高亮切换
+    document.querySelectorAll('#btn-ta-left, #btn-ta-center, #btn-ta-right').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active'); 
+    updateTransferCSS();
+}
+
+// 2. 一键同步气泡样式
+function syncBubbleStyle() {
+    if(!confirm('确定要将【外观】面板的颜色和圆角覆盖到这里吗？')) return;
+    
+    // 同步颜色
+    const h1 = document.getElementById('h1').value;
+    const h2 = document.getElementById('h2').value;
+    document.getElementById('tGc1').value = h1;
+    document.getElementById('tGc2').value = (document.getElementById('colorCount').value == 1) ? h1 : h2;
+    
+    // 开启渐变开关
+    document.getElementById('tGradSwitch').checked = true;
+    document.getElementById('tGradOp').value = 1;
+
+    // 同步圆角
+    const r = document.getElementById('radius').value;
+    document.getElementById('tRadius').value = r;
+
+    updateTransferCSS();
+    alert('✅ 已同步！');
+}
+
+// 3. 核心生成逻辑 (最终修复版)
+function updateTransferCSS() {
+    // 1. 获取值的辅助函数
+    const v = (id) => { 
+        const el = document.getElementById(id); 
+        if (!el) return (id.includes('Width') ? 230 : 0); 
+        return (el.type==='checkbox'?el.checked:el.value); 
+    };
+
+    /* ★★★★★ 这里是修复的关键：控制菜单显示/隐藏 ★★★★★ */
+    // 如果找到了开关和菜单，就根据开关状态切换显示
+    if (document.getElementById('tContentSwitch') && document.getElementById('tContentControls')) {
+        const isChecked = document.getElementById('tContentSwitch').checked;
+        document.getElementById('tContentControls').style.display = isChecked ? 'block' : 'none';
+    }
+    
+    // 更新数值显示
+    ['tWidth','tHeight','tRadius','tDecoSize','tDecoRot'].forEach(id => {
+        if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id) + (id.includes('Rot')?'°':'');
+    });
+    
+    // 0. 基础数值显示
+    ['tWidth','tHeight','tRadius','tDecoSize','tDecoRot'].forEach(id => {
+        if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id) + (id.includes('Rot')?'°':'');
+    });
+
+    // 1. 面板显隐
     document.getElementById('tGradControls').style.display = v('tGradSwitch') ? 'block' : 'none';
     document.getElementById('tDecoControls').style.display = v('tDecoSwitch') ? 'block' : 'none';
-    document.getElementById('tRadiusControl').style.display = (v('tShape')==='default') ? 'block' : 'none';
-    
-    // 开关控制内容设置
-    const modifyContent = v('tContentSwitch');
-    const contentControls = document.getElementById('tContentControls');
-    if(contentControls) contentControls.style.display = modifyContent ? 'block' : 'none';
+    const isDefaultShape = v('tShape') === 'default';
+    document.getElementById('tRadiusControl').style.display = isDefaultShape ? 'block' : 'none';
+    document.getElementById('tSizeControls').style.display = isDefaultShape ? 'grid' : 'none';
 
-    // 1. 背景图层逻辑
+    // 2. 背景生成
     let bgLayers = [];
-    
-    // 渐变叠加
     if (v('tGradSwitch')) {
         const gc1 = hexToRgba(v('tGc1'), v('tGradOp'));
         const gc2 = hexToRgba(v('tGc2'), v('tGradOp'));
-        bgLayers.push(`linear-gradient(135deg, ${gc1}, ${gc2})`);
+        bgLayers.push(`linear-gradient(${v('tGradAng') || 135}deg, ${gc1}, ${gc2})`);
     }
-
-    // 主背景图
     let mainImg = assets.tBg !== 'none' ? assets.tBg : (v('tBgUrl') ? `url('${v('tBgUrl')}')` : 'none');
     if (mainImg !== 'none') bgLayers.push(mainImg);
-    
-    // 如果没有背景，给一个默认的橙色兜底
     if (bgLayers.length === 0) bgLayers.push('linear-gradient(135deg, #fa9d3b, #f57f20)'); 
-    
-    const bgImageVal = bgLayers.join(', ');
-    const bgSizeVal = v('tBgSize');
 
-    // 2. 形状逻辑
-    const shape = v('tShape');
+    // 3. 形状与尺寸
     let shapeCSS = '';
-    let childCSS = '';
-    
-    // 注意：这里去掉了多余的 !important，让外部的 display:none 能生效
-    if (shape === 'default') {
-        shapeCSS = `border-radius: ${v('tRadius')}px !important; width: 230px !important; height: 150px !important;`;
-    } else if (shape === 'circle') {
-        shapeCSS = `border-radius: 50% !important; width: 200px !important; height: 200px !important; text-align:center !important; align-items:center !important; justify-content:center !important; padding:0 !important;`;
-    } else if (shape === 'diamond') {
-        shapeCSS = `transform: rotate(45deg) !important; width: 180px !important; height: 180px !important; overflow: visible !important; justify-content:center !important; align-items:center !important;`;
-        childCSS = `transform: rotate(-45deg) !important;`;
-    } else if (shape === 'hexagon') {
-        shapeCSS = `clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%) !important; width: 200px !important; height: 230px !important; justify-content:center !important; align-items:center !important;`;
+    let childTrans = '';
+    const w = v('tWidth') + 'px';
+    const h = v('tHeight') + 'px';
+
+    if (v('tShape') === 'default') {
+        shapeCSS = `width: ${w} !important; height: ${h} !important; border-radius: ${v('tRadius')}px !important;`;
+    } else if (v('tShape') === 'circle') {
+        shapeCSS = `width: 220px !important; height: 220px !important; border-radius: 50% !important; aspect-ratio: 1/1 !important;`;
+    } else if (v('tShape') === 'diamond') {
+        shapeCSS = `width: 200px !important; height: 200px !important; transform: rotate(45deg) !important; margin: 30px !important;`;
+        childTrans = `transform: rotate(-45deg) !important;`;
     }
-    
-    // 3. 纹理装饰逻辑
+
+    // 4. 对齐逻辑 (关键修复点)
+    const alignKey = v('tAlign') || 'flex-start';
+    let textAlign = 'left';
+    if(alignKey === 'center') textAlign = 'center';
+    if(alignKey === 'flex-end') textAlign = 'right';
+
+    // 5. 装饰纹理 (::before)
     let decoCSS = '';
     if (v('tDecoSwitch')) {
         let dUrl = assets.tDeco !== 'none' ? assets.tDeco : (v('tDecoUrl') ? `url('${v('tDecoUrl')}')` : 'none');
         if (dUrl !== 'none') {
+            const scale = v('tDecoSize') / 100; 
+            const dX = v('tDecoX');
+            const dY = v('tDecoY');
+            const dRot = v('tDecoRot');
+            
             decoCSS = `
             .transfer-card-demo::before, .transfer-card::before {
-                content: '' !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important;
-                background-image: ${dUrl} !important; background-size: cover !important; opacity: ${v('tDecoOp')} !important; z-index: 0 !important; pointer-events: none !important;
+                content: '' !important; position: absolute !important; 
+                top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+                background-image: ${dUrl} !important; 
+                background-size: contain !important; 
+                background-repeat: no-repeat !important; 
+                background-position: center !important;
+                opacity: ${v('tDecoOp')} !important; 
+                z-index: 0 !important; pointer-events: none !important;
+                /* 使用 transform 进行 缩放、位移、旋转 */
+                transform: translate(${dX}px, ${dY}px) rotate(${dRot}deg) scale(${scale}) !important;
             }
-            .transfer-card > *, .transfer-card-demo > * { position: relative !important; z-index: 1 !important; }
             `;
         }
     }
 
-    // 4. 文字内容逻辑
+    // 6. 标题替换
     const color = v('tTextColor');
     let titleCSS = '';
-
-    if (modifyContent) {
-        const title = v('tTitleText').replace(/"/g, '\\"'); // Escape quotes
-        const tSize = v('tTitleSize');
+    let iconDisplay = 'inline-flex';
+    if (v('tContentSwitch')) {
+        iconDisplay = 'none';
+        const tText = v('tTitleText').replace(/"/g, '\\"');
         titleCSS = `
-    /* 标题文字替换 Hack */
-    .transfer-title, #tDemoTitle {
-        font-size: 0 !important;
-        line-height: 0 !important;
-    }
-    .transfer-title::after, #tDemoTitle::after {
-        content: "${title}" !important;
-        font-size: ${tSize}px !important;
-        line-height: 1.4 !important; /* Fix font display */
-        display: block !important;
-        margin-top: -2px; /* Fine tune alignment */
-    }
+        .transfer-title::after, #tDemoTitle::after {
+            content: "${tText}" !important;
+            display: block !important;
+            font-size: ${v('tTitleSize')}px !important;
+        }
+        .transfer-title, #tDemoTitle { font-size: 0 !important; }
         `;
     }
-    
-    // 生成 CSS 字符串
-    // ★★★ 关键修改：display: flex 去掉了 !important ★★★
+
+    // 7. 生成 CSS (注意 align-items: stretch)
     const css = `
     .transfer-card, .transfer-card-demo {
-        background-image: ${bgImageVal} !important;
-        background-size: ${bgSizeVal} !important;
+        background-image: ${bgLayers.join(', ')} !important;
+        background-size: ${v('tBgSize')} !important;
         background-position: center !important;
         background-repeat: no-repeat !important;
-        color: ${color} !important;
+        
         display: flex; 
         flex-direction: column !important;
+        justify-content: center !important; 
+        align-items: stretch !important; /* 关键：让子元素占满宽度 */
+        
+        padding: ${v('tPad')}px !important;
         position: relative !important;
         box-sizing: border-box !important;
         ${shapeCSS}
     }
+    
     .transfer-card *, .transfer-card-demo * {
         color: ${color} !important;
+        border-color: ${color} !important;
+        position: relative !important; 
+        z-index: 1 !important;
+        ${childTrans}
     }
-    .transfer-card > *, .transfer-card-demo > * {
-        ${childCSS}
+
+    /* 标题行 (Flex容器) */
+    .transfer-title, #tDemoTitle { 
+        display: flex !important;
+        width: 100% !important;
+        justify-content: ${alignKey} !important; /* 图标文字对齐 */
+        align-items: center !important;
+        margin-bottom: ${v('tGap1')}px !important;
+    }
+    
+    /* 金额行 (块级元素) */
+    .transfer-amount { 
+        font-size: 24px !important; 
+        font-weight: bold !important; 
+        text-align: ${textAlign} !important; /* 文字对齐 */
+        margin-bottom: ${v('tGap2')}px !important;
+        margin-top: 0 !important;
+    }
+    
+    /* 备注行 (块级元素) */
+    .transfer-note { 
+        font-size: 12px !important; 
+        opacity: 0.9 !important; 
+        text-align: ${textAlign} !important; /* 文字对齐 */
+    }
+
+    .transfer-status { display: none !important; }
+
+    .t-icon-bg {
+        display: ${iconDisplay} !important; 
+        width: 20px; height: 20px; 
+        
+        align-items: center; justify-content: center;
+        margin-right: 6px; flex-shrink: 0;
     }
     
     ${titleCSS}
     ${decoCSS}
     `;
     
-    // 注入样式
     document.getElementById('dynamic-transfer-css').innerHTML = css;
     
-    // 保存状态
+    // 实时同步到模拟区
+    const demoHTML = document.getElementById('transferDemo').innerHTML;
+    document.querySelectorAll('.t-card-target').forEach(el => {
+        if(el.innerHTML !== demoHTML) el.innerHTML = demoHTML;
+    });
+
     saveState();
-    
-    // 如果在导出页，顺便更新代码框
     if(document.getElementById('tab5').classList.contains('active')) update();
 }
 
@@ -2023,16 +2254,15 @@ ${selector}::${pseudo} {
     if (hasSticker1 && assets.sticker1) css += genStickerCSS(1, 'after');
     if (!isGb && hasSticker2 && assets.sticker2) css += genStickerCSS(2, 'before');
     
-    // Append Transfer CSS
-    const transferCSSContent = document.getElementById('dynamic-transfer-css').innerHTML;
-    if (transferCSSContent) {
-        // Strip out demo selectors to make it production ready for user
-        const cleanTransferCSS = transferCSSContent
-            .replace(/, \.transfer-card-demo/g, '')
-            .replace(/, #tDemoTitle/g, '')
-            .replace(/, \.transfer-card-demo > \*/g, '');
-            
-        css += `\n\n/* -------- 转账卡片美化 -------- */${cleanTransferCSS}`;
+     // Append Transfer CSS
+    const tCss = document.getElementById('dynamic-transfer-css').innerHTML;
+    if (tCss) {
+        css += `\n\n/* -------- 转账卡片美化 -------- */` + tCss
+            .replace(/, \.transfer-card-demo \*/g, '') // 关键：移除预览用的通配符
+            .replace(/, \.transfer-card-demo/g, '')    // 移除预览用的主类
+            .replace(/, #tDemoTitle::after/g, '')       // 移除ID hack
+            .replace(/, #tDemoTitle/g, '')              // 移除ID hack
+            .replace(/, \.transfer-card-demo > \*/g, ''); // 移除子元素 hack
     }
 
     codeOut.innerText = css;
@@ -2125,6 +2355,157 @@ function formatUrl(val) {
     return `url('${raw}')`;
 }
 
+/* ================= 撤销/重做 核心逻辑 (新增) ================= */
+let historyStack = [];
+let historyPtr = -1;
+let isHistoryNavigating = false;
+let historyDebounceTimer = null;
+
+// 初始化：页面加载完后，先记录一下初始状态
+setTimeout(() => {
+    // 强制记录一次初始状态
+    const initialState = getCurrentStateObj();
+    historyStack.push(JSON.stringify(initialState));
+    historyPtr = 0;
+    updateHistoryButtons();
+}, 500);
+
+// 1. 获取当前状态对象的辅助函数 (从原 saveState 提取)
+function getCurrentStateObj() {
+    const state = {};
+    document.querySelectorAll('.save-state').forEach(el => {
+        state[el.id] = (el.type === 'checkbox') ? el.checked : el.value;
+    });
+    state['gradPos'] = gradState; // 全局变量
+    state['decorations'] = decorations; // 全局变量
+    
+    // 补充一些手动获取的 input
+    ['h1','h2','h3','h4'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) state[id] = el.value;
+    });
+    ['num-s1X','num-s1Y','num-s2X','num-s2Y'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) state[id] = el.value;
+    });
+    ['b2Hex'].forEach(id => { 
+        const el = document.getElementById(id);
+        if(el) state[id] = el.value; 
+    });
+    
+    return state;
+}
+
+// 2. 劫持并重写原有的 saveState 函数
+// 目的：在保存到 localStorage 的同时，决定是否推入历史栈
+const originalSaveState = saveState; // 备份原函数（如果有引用的话）
+
+saveState = function() {
+    // A. 依然执行原有的 LocalStorage 保存逻辑
+    const state = getCurrentStateObj();
+    localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(state));
+
+    // B. 历史记录逻辑
+    // 如果正在进行撤销/重做操作，不要记录新的历史，否则会覆盖未来
+    if (isHistoryNavigating) return;
+
+    // 防抖处理：如果是滑块拖动，不要频繁记录
+    clearTimeout(historyDebounceTimer);
+    historyDebounceTimer = setTimeout(() => {
+        pushToHistory(state);
+    }, 400); // 400ms 内没有新操作才算一次“定格”
+};
+
+// 3. 推入历史栈
+function pushToHistory(stateObj) {
+    const stateStr = JSON.stringify(stateObj);
+    
+    // 如果跟当前最新的一条一样，就不重复记录
+    if (historyPtr >= 0 && historyStack[historyPtr] === stateStr) {
+        return;
+    }
+
+    // 如果我们在历史中间位置进行了新操作，把后面的“未来”切断
+    if (historyPtr < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyPtr + 1);
+    }
+
+    historyStack.push(stateStr);
+    historyPtr++;
+    
+    // 限制历史步数（例如最多50步），防止内存溢出
+    if (historyStack.length > 50) {
+        historyStack.shift();
+        historyPtr--;
+    }
+    
+    updateHistoryButtons();
+}
+
+// 4. 执行撤销
+function performUndo() {
+    if (historyPtr > 0) {
+        historyPtr--;
+        const stateStr = historyStack[historyPtr];
+        applyHistoryState(stateStr);
+        updateHistoryButtons();
+    }
+}
+
+// 5. 执行重做
+function performRedo() {
+    if (historyPtr < historyStack.length - 1) {
+        historyPtr++;
+        const stateStr = historyStack[historyPtr];
+        applyHistoryState(stateStr);
+        updateHistoryButtons();
+    }
+}
+
+// 6. 应用历史状态 (巧妙利用 LocalStorage 桥接)
+function applyHistoryState(stateStr) {
+    isHistoryNavigating = true; // 锁定，防止 update() 触发新的 saveState
+
+    // 技巧：直接把历史数据写入 localStorage，然后调用你现有的 loadState
+    localStorage.setItem('eveBubbleState_Final_V13', stateStr);
+    
+    if (loadState()) {
+        // loadState 只是设置了 input 的值，我们需要触发视图更新
+        // 特殊处理 gradState 和 decorations，因为 loadState 里处理了它们
+        // 但我们需要手动调用 update() 来刷新预览
+        update(); 
+        if(typeof updateTransferCSS === 'function') updateTransferCSS();
+    }
+
+    // 短暂延迟后解锁，允许新的操作被记录
+    setTimeout(() => {
+        isHistoryNavigating = false;
+    }, 100);
+}
+
+// 7. 更新按钮状态 (变灰)
+function updateHistoryButtons() {
+    const btnUndo = document.querySelectorAll('.history-btn')[0];
+    const btnRedo = document.querySelectorAll('.history-btn')[1];
+    
+    if (historyPtr <= 0) btnUndo.classList.add('disabled');
+    else btnUndo.classList.remove('disabled');
+
+    if (historyPtr >= historyStack.length - 1) btnRedo.classList.add('disabled');
+    else btnRedo.classList.remove('disabled');
+}
+
+// 8. 键盘快捷键支持 (Ctrl+Z, Ctrl+Y)
+window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        performUndo();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        performRedo();
+    }
+});
 window.addEventListener('load', () => {
     const savedCanvas = localStorage.getItem('eve_canvas_mode_final');
     if(savedCanvas) setCanvas(savedCanvas);
@@ -2135,3 +2516,4 @@ setTimeout(update, 100);
 </script>
 </body>
 </html>
+
