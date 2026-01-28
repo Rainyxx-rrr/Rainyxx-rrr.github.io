@@ -840,7 +840,7 @@
     <!-- 3. 纹理装饰 (::before) -->
     <div class="control-group">
         <div class="label-row">
-            <span class="label-text">纹理装饰 (超出的部分会被裁剪)</span>
+            <span class="label-text">贴图装饰</span>
             <input type="checkbox" id="tDecoSwitch" class="save-state" onchange="updateTransferCSS()">
 <button onclick="clearImageAsset('tDeco')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 10px;">清除</button>
         </div>
@@ -1731,15 +1731,15 @@ function updateTransferCSS() {
             
             decoCSS = `
             .transfer-card-demo::before, .transfer-card::before {
-                content: '' !important; position: absolute !important; 
-                top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+                content: '' !important; 
+                position: absolute !important; 
+                inset: -200px !important;
                 background-image: ${dUrl} !important; 
                 background-size: contain !important; 
                 background-repeat: no-repeat !important; 
                 background-position: center !important;
-                opacity: ${v('tDecoOp')} !important; 
-                z-index: 0 !important; pointer-events: none !important;
-                /* 使用 transform 进行 缩放、位移、旋转 */
+                z-index: 0 !important; 
+                pointer-events: none !important;
                 transform: translate(${dX}px, ${dY}px) rotate(${dRot}deg) scale(${scale}) !important;
             }
             `;
@@ -1780,6 +1780,7 @@ function updateTransferCSS() {
         position: relative !important;
         box-sizing: border-box !important;
         ${shapeCSS}
+        overflow: visible !important;
     }
     
     .transfer-card *, .transfer-card-demo * {
