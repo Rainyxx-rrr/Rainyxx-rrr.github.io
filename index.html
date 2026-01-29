@@ -550,6 +550,13 @@
                 <input type="range" id="shadow" class="save-state" min="0" max="80" value="12" oninput="update()">
             </div>
 
+<div class="label-row" style="margin-top:8px;"><span class="label-text">偏移角度</span><span class="label-val" id="val-shadowAngle">0</span></div>
+<input type="range" id="shadowAngle" class="save-state" min="0" max="360" value="0" oninput="document.getElementById('val-shadowAngle').textContent=this.value; update()">
+
+<div class="label-row" style="margin-top:8px;"><span class="label-text">偏移距离</span><span class="label-val" id="val-shadowDistance">0</span></div>
+<input type="range" id="shadowDistance" class="save-state" min="0" max="50" value="0" oninput="document.getElementById('val-shadowDistance').textContent=this.value; update()">
+
+
             <div class="control-group">
                 <div class="label-row"><span class="label-text">背景模糊 (Blur)</span><span class="label-val" id="val-blur">0</span></div>
                 <input type="range" id="blur" class="save-state" min="0" max="40" value="0" oninput="update()">
@@ -1916,7 +1923,13 @@ function update() {
     const sColorHex = document.getElementById('shadowColor').value;
     const sColorA = document.getElementById('shadowAlpha').value;
     const sColor = hexToRgba(sColorHex, sColorA);
-    const outShadow = `0 ${v('shadow')/2}px ${v('shadow')}px ${sColor}`;
+    const shadowAngle = parseFloat(v('shadowAngle')) || 0;
+const shadowDistance = parseFloat(v('shadowDistance')) || 0;
+const angleRad = (shadowAngle * Math.PI) / 180;
+const offsetX = Math.round(shadowDistance * Math.cos(angleRad));
+const offsetY = Math.round(shadowDistance * Math.sin(angleRad));
+const outShadow = `${offsetX}px ${offsetY}px ${v('shadow')}px ${sColor}`;
+
     const inLight = `inset ${ins/2}px ${ins/2}px ${ins}px rgba(255,255,255,0.85)`;
     const inDark = `inset -${ins/3}px -${ins/3}px ${ins}px rgba(0,0,0,0.12)`;
     let bubbleBoxShadow = `${outShadow}, ${inLight}, ${inDark}`;
