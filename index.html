@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -188,7 +187,7 @@
             outline-style: solid; 
         }
 
-        .chat-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 18px; padding-bottom: 40px; }
+        .chat-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 0px; padding-bottom: 40px; }
         .chat-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; }
         .chat-row.right { flex-direction: row-reverse; }
         .chat-avatar { width: 2.5rem; height: 2.5rem; background: #ddd; border-radius: 6px; flex-shrink: 0; background-size: cover; background-position: center; }
@@ -266,6 +265,50 @@
         .transfer-title { font-size: 14px; opacity: 0.9; }
         .transfer-footer { z-index:2; position:relative; font-size: 11px; opacity: 0.7; }
 
+/* 作者弹窗样式 */
+.welcome-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4); 
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+.welcome-overlay.show { opacity: 1; pointer-events: auto; }
+
+.welcome-box {
+    background: #ffffff; width: 85%; max-width: 380px;
+    padding: 30px 25px; border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    text-align: center;
+    transform: scale(0.9) translateY(20px); transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.welcome-overlay.show .welcome-box { transform: scale(1) translateY(0); }
+
+.welcome-icon { font-size: 48px; margin-bottom: 15px; display: inline-block; animation: bounce 2s infinite; }
+.welcome-title { font-size: 20px; font-weight: 700; color: #333; margin: 0 0 10px; }
+.welcome-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 25px; }
+.welcome-author { 
+    background: #f5f7fa; padding: 12px; border-radius: 12px; 
+    margin-bottom: 25px; border: 1px solid #eee;
+}
+.welcome-row { display: flex; justify-content: space-between; font-size: 12px; margin: 4px 0; }
+.welcome-label { color: #888; }
+.welcome-val { font-weight: 600; color: #333; font-family: -apple-system, monospace; }
+
+.welcome-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 12px;
+    background: var(--primary); color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform 0.1s;
+}
+.welcome-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-10px);}
+    60% {transform: translateY(-5px);}
+}
+
     </style>
     <!-- Dynamic CSS Injection for Transfer Preview -->
     <style id="dynamic-transfer-css"></style>
@@ -306,7 +349,7 @@
                 <div class="preset-item" onclick="applyPreset('classic')">经典纯白</div>
                 <div class="preset-item" onclick="applyPreset('glass')">磨砂玻璃</div>
                 <div class="preset-item" onclick="applyPreset('raindrop')">立体雨滴</div>
-                <div class="preset-item" onclick="applyPreset('pearl')">圆润珍珠</div>
+                <div class="preset-item" onclick="applyPreset('pearl')">简约拟态</div>
                 <div class="preset-item" onclick="applyPreset('gradient')">梦幻渐变</div>
                 <div class="preset-item" onclick="applyPreset('dark')">极客深色</div>
                 <div class="preset-item special" onclick="applyPreset('custom')">自由创作</div>
@@ -377,6 +420,18 @@
 
         <!-- Tab 1: 质感 -->
         <div class="tab-content" id="tab1">
+<!-- 插入开始：布局控制 -->
+<div class="control-group" style="border-bottom:1px dashed #eee; padding-bottom:15px; margin-bottom:15px;">
+    <div class="label-row"><span class="label-text">整体布局 (Layout)</span></div>
+   
+    <!-- 2. 行间距控制 -->
+    <div class="label-row" style="margin-top:15px;">
+        <small>气泡行间距 (Row Spacing)</small>
+        <span class="label-val" id="val-rowGap">18</span>
+    </div>
+    <input type="range" id="rowGap" class="save-state" min="-30" max="60" value="18" oninput="update()">
+</div>
+<!-- 插入结束 -->
             <div class="control-group">
                 <div class="label-row"><span class="label-text">尺寸限制</span></div>
                 <div class="label-row"><span class="label-text" style="font-weight:400; font-size:11px;">最大宽度 (% of screen)</span><span class="label-val" id="val-maxWidth">80</span></div>
@@ -696,6 +751,10 @@
                         <option value="rc">右中 (Right-Center)</option>
                     </select>
 
+<div style="margin-top:5px; text-align:right;">
+    <button onclick="flipSticker(1)" style="font-size:11px; padding:3px 8px; border:1px solid #ddd; background:#f0f7ff; color:var(--primary); border-radius:4px; cursor:pointer;">⇄ 镜像翻转 (对称)</button>
+</div>
+
                     <div class="label-row" style="margin-top:10px;">
                         <span class="label-text">不透明度</span>
                         <span class="label-val" id="val-s1Op">1.0</span>
@@ -766,6 +825,10 @@
                         <option value="lc">左中 (Left-Center)</option>
                         <option value="rc">右中 (Right-Center)</option>
                     </select>
+
+<div style="margin-top:5px; text-align:right;">
+    <button onclick="flipSticker(2)" style="font-size:11px; padding:3px 8px; border:1px solid #ddd; background:#fff0f6; color:#e91e63; border-radius:4px; cursor:pointer;">⇄ 镜像翻转 (对称)</button>
+</div>
 
                     <div class="label-row" style="margin-top:10px;">
                         <span class="label-text">不透明度</span>
@@ -961,7 +1024,24 @@
 </div>
 
 <!-- Tab 9: 头像设置 -->
+<!-- Tab 9: 头像设置 (修正版：只有对齐，没有行距) -->
 <div class="tab-content" id="tab9">
+    
+    <!-- 1. 整体布局与对齐 (Layout) -->
+    <div class="control-group">
+        <div class="label-row"><span class="label-text">整体布局与对齐 (Layout)</span></div>
+        <div class="label-row"><small>气泡垂直对齐 (相对于头像)</small></div>
+        <select id="bubbleAlign" class="save-state" onchange="update()">
+            <option value="flex-start">顶部对齐 (Top) - 默认</option>
+            <option value="center">居中对齐 (Center)</option>
+            <option value="flex-end">底部对齐 (Bottom)</option>
+        </select>
+        <div class="warn-box" style="margin-top:5px; font-size:10px;">
+            提示：当气泡很短、头像很大时，调整此处效果最明显。
+        </div>
+    </div>
+
+    <!-- 2. 基础设置 (尺寸、圆角、头像与气泡距离) -->
     <div class="control-group">
         <div class="label-row"><span class="label-text">基础设置</span></div>
         <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -978,9 +1058,18 @@
                 </select>
             </div>
         </div>
+
+        <!-- 头像与气泡距离 -->
+        <div style="margin-top:10px; border-top:1px dashed #eee; padding-top:10px;">
+            <div class="label-row">
+                <span class="label-text">头像与气泡距离 (Gap)</span>
+                <span class="label-val" id="val-avGap">0</span>
+            </div>
+            <input type="range" id="avGap" class="save-state" min="0" max="60" value="6" oninput="update()">
+        </div>
     </div>
 
-    <!-- 发送方 (我) -->
+    <!-- 3. 发送方 (我) -->
     <div class="control-group" style="border-top:1px dashed #eee; padding-top:15px;">
         <div class="label-row">
             <span class="label-text" style="color:var(--primary)">发送方 (Sent) - 右侧</span>
@@ -993,10 +1082,8 @@
                 <button onclick="applyAvatarUrl('sent')" style="font-size:11px; padding:0 8px;">应用</button>
                 <button onclick="clearImageAsset('avatarSent')" style="font-size:11px; padding:0 8px; color:#ff4d4f;">🗑️</button>
             </div>
-            
             <div class="label-row" style="margin-top:10px;"><small>大小缩放 (%)</small><span class="label-val" id="val-avSentScale">118</span></div>
             <input type="range" id="avSentScale" class="save-state" min="50" max="200" value="118" oninput="update()">
-            
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
                 <div><small>X 偏移</small><input type="range" id="avSentX" class="save-state" min="-50" max="50" value="0" oninput="update()"></div>
                 <div><small>Y 偏移</small><input type="range" id="avSentY" class="save-state" min="-50" max="50" value="-2" oninput="update()"></div>
@@ -1004,7 +1091,7 @@
         </div>
     </div>
 
-    <!-- 接收方 (他) -->
+    <!-- 4. 接收方 (他) -->
     <div class="control-group" style="border-top:1px dashed #eee; padding-top:15px;">
         <div class="label-row">
             <span class="label-text" style="color:#e91e63">接收方 (Received) - 左侧</span>
@@ -1017,10 +1104,8 @@
                 <button onclick="applyAvatarUrl('recv')" style="font-size:11px; padding:0 8px;">应用</button>
                 <button onclick="clearImageAsset('avatarRecv')" style="font-size:11px; padding:0 8px; color:#ff4d4f;">🗑️</button>
             </div>
-            
             <div class="label-row" style="margin-top:10px;"><small>大小缩放 (%)</small><span class="label-val" id="val-avRecvScale">118</span></div>
             <input type="range" id="avRecvScale" class="save-state" min="50" max="200" value="118" oninput="update()">
-            
              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
                 <div><small>X 偏移</small><input type="range" id="avRecvX" class="save-state" min="-50" max="50" value="0" oninput="update()"></div>
                 <div><small>Y 偏移</small><input type="range" id="avRecvY" class="save-state" min="-50" max="50" value="-2" oninput="update()"></div>
@@ -1121,10 +1206,13 @@
         </div>
 
         <div class="preview-stage" id="stage">
+    <div id="previewWrapper" style="display:flex; flex-direction:column; gap:0px; align-items:center; width: 100%;">
             <div class="preview-bubble" id="soloBubble">
+                1
+            </div>
+            <div class="preview-bubble" id="soloBubble2">
                 图片请使用url上传
             </div>
-            
               <div class="transfer-card-demo" id="transferDemo" style="display:none;">
                 <!-- 标题行：图标 + 文字 -->
                 <div class="transfer-title" id="tDemoTitle">
@@ -1138,20 +1226,24 @@
                 <!-- 备注 -->
                 <div class="transfer-note">转账</div>
 </div>
+<!-- 修改开始：Tab 9 头像预览区域 -->
 <div id="avatarDemo" style="display:none; flex-direction:column; gap:40px; width:100%; padding:20px;">
     <!-- 接收方 (左) -->
     <div class="chat-row left av-preview-row">
-        <div class="chat-avatar" style="background:#ccc;"></div> <!-- 灰色底色代表原头像 -->
-
-        <div class="chat-bubble-gray">接收方 (Received)</div>
+        <!-- 注意：这里必须是 chat-avatar，代码才会认 -->
+        <div class="chat-avatar" style="background:#ccc;"></div> 
+        <!-- 关键修改：加上 preview-bubble 和 av-demo-bubble 类名 -->
+        <div class="preview-bubble av-demo-bubble">接收方 (Received)</div>
     </div>
     
     <!-- 发送方 (右) -->
     <div class="chat-row right av-preview-row">
-        <div class="chat-avatar" style="background:#ccc;"></div> <!-- 灰色底色代表原头像 -->
-        <div class="preview-bubble">发送方 (Sent)</div>
+        <div class="chat-avatar" style="background:#ccc;"></div> 
+        <!-- 关键修改：加上 av-demo-bubble 类名 -->
+        <div class="preview-bubble av-demo-bubble">发送方 (Sent)</div>
     </div>
 </div>
+<!-- 修改结束 -->
 
      <!-- ★★★ 3. 聊天模拟容器 ★★★ -->
      <div class="chat-container" id="chatSim" style="display:none;">
@@ -1224,54 +1316,66 @@ function applyTransferToSim() {
     switchTab(4);
 }
 
+// ★★★ 修复后的页面切换函数 ★★★
 function switchTab(idx) {
-    // 1. 按钮高亮
+    // 1. 按钮高亮逻辑
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`.tab-btn[onclick="switchTab(${idx})"]`);
     if(activeBtn) activeBtn.classList.add('active');
     
-    // 2. 面板切换
+    // 2. 面板切换逻辑
     document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
     document.getElementById('tab'+idx).classList.add('active');
 
-    // 3. 获取各预览区域
-    const solo = document.getElementById('soloBubble');
-    const sim = document.getElementById('chatSim');
-    const trans = document.getElementById('transferDemo');
-    const avDemo = document.getElementById('avatarDemo'); // ★ 新增
+    // 3. 获取所有需要控制显示/隐藏的元素
+    const solo = document.getElementById('soloBubble');   // 原气泡
+    const solo2 = document.getElementById('soloBubble2'); // ★ 新气泡
+    const sim = document.getElementById('chatSim');       // 模拟页
+    const trans = document.getElementById('transferDemo');// 转账页
+    const avDemo = document.getElementById('avatarDemo'); // 头像预览页
     const body = document.body;
     
-    // 4. 全部隐藏
-    solo.style.display = 'none';
+    // 4. 先把它们【全部隐藏】
+    if(solo) solo.style.display = 'none';
+    if(solo2) solo2.style.display = 'none'; // ★ 隐藏新气泡
     sim.style.display = 'none';
     trans.style.display = 'none';
-    avDemo.style.display = 'none'; // ★ 新增
+    avDemo.style.display = 'none';
     body.classList.remove('sim-mode');
 
-    // 5. 判断显示逻辑
+    // 5. 根据当前页面编号 (idx) 决定显示谁
     if (idx === 7) { 
-        // 转账页
+        // --- 转账页 ---
         trans.style.display = 'flex';
         updateTransferCSS();
     } 
     else if (idx === 4) { 
-        // 模拟页 (完整对话)
+        // --- 模拟页 (完整对话) ---
         sim.style.display = 'flex';
         body.classList.add('sim-mode');
         update(); 
     } 
     else if (idx === 9) { 
-        // ★★★ 头像页 (简洁预览) ★★★
-        avDemo.style.display = 'flex'; // 显示我们刚才加的那个简洁区
-        update(); // 强制刷新，渲染头像框
-    }
-    else { 
-        // 其他页 (外观等)
-        solo.style.display = 'inline-block';
+        // --- 头像页 (简洁预览) ---
+        avDemo.style.display = 'flex';
         update();
     }
-    
-    if (idx === 5) renderUrlFixPanel();
+    else if (idx === 5 || idx === 8) {
+        // --- 导出/导入页 ---
+        // 这两个页面通常不需要显示右侧预览，或者你可以选择显示气泡
+        // 这里设定为显示基础气泡，方便看效果
+        if(solo) solo.style.display = 'inline-block';
+        if(solo2) solo2.style.display = 'inline-block';
+        if (idx === 5) renderUrlFixPanel();
+        update();
+    }
+    else { 
+        // --- 外观、质感等编辑页 ---
+        // 显示两个展示气泡
+        if(solo) solo.style.display = 'inline-block';
+        if(solo2) solo2.style.display = 'inline-block'; // ★ 显示新气泡
+        update();
+    }
 }
 
 function setSimMode(mode, btn) {
@@ -1480,12 +1584,33 @@ const configs = {
         inset: 10, insetDist: 4, insetHighOp: 1.0, insetShadowOp: 0.3, insetAng: 135 
     },
 
-    // 4. 软萌凹陷 (你要求的：右上黑，左下白)
+    // 4. 软萌拟态 (Neumorphism)
+  // 4. 陶釉质感 (还原你的CSS: #ebebeb + 双重内阴影)
     pearl: { 
-        count:1, type:'none', alpha: 1, radius: 18, bwidth: 0, bstyle:'solid', boffset:0, shadow: 0, blur: 0, pady: 8, padx: 10, colors: ['#e0e0e0'], gb: false,
-        // 315度 = 右上黑(阴影)，左下白(高光) = 完美的按压凹陷感
-        // 配合 e0e0e0 背景，黑色阴影会自动呈现深灰色质感
-        inset: 6, insetDist: 4, insetHighOp: 1.0, insetShadowOp: 0.2, insetAng: 315 
+        count: 1, type: 'none', alpha: 1, 
+        colors: ['#ebebeb'], // 背景色：rgba(235, 235, 235, 1)
+        
+        radius: 12, 
+        pady: 8, padx: 10, 
+        
+        bwidth: 0, bstyle: 'solid', boffset: 0,
+        
+        // 外阴影: box-shadow: 1px 2px 2px rgba(0, 0, 0, 0.25)
+        // 距离≈2.2，角度≈63度，模糊=2，透明度=0.25
+        shadow: 2, shadowAlpha: 0.25, shadowDist: 2.2, shadowAng: 63,
+        
+        gb: false,
+
+        // 内阴影 (关键): 
+        // CSS: inset 0px 3px 2px #d6d6d6, inset 0px -3px 2px rgba(#d6d6d6, 0.45)
+        // 解析: 角度90度(垂直), 距离3px, 模糊2px
+        // 上边(High)颜色 #d6d6d6 (100%), 下边(Shadow)颜色 #d6d6d6 (45%)
+        inset: 2, 
+        insetDist: 3, 
+        insetAng: 90, 
+        
+        insetHighHex: '#d6d6d6', insetHighOp: 1.0,   // 上边内阴影
+        insetShadowHex: '#d6d6d6', insetShadowOp: 0.45 // 下边内阴影
     },
 
     // 5. 梦幻渐变
@@ -1504,42 +1629,75 @@ const configs = {
 };
 
 function applyPreset(name) {
-    currentMode = name;
     const c = configs[name];
     if (c) {
+        // 1. 基础外观
         document.getElementById('lockCorners').checked = true;
         updateLock();
         document.getElementById('colorCount').value = c.count;
         document.getElementById('gradType').value = c.type;
         document.getElementById('alpha').value = c.alpha;
         document.querySelectorAll('.alpha-in').forEach(el => el.value = c.alpha);
-        document.getElementById('fontAlpha').value = 1;
-        document.getElementById('borderAlpha').value = 1;
+        
+        // 2. 尺寸与边框
         document.getElementById('radius').value = c.radius;
-        document.getElementById('bwidth').value = c.bwidth;
-        document.getElementById('borderStyle').value = c.bstyle;
-        document.getElementById('boffset').value = c.boffset;
-        document.getElementById('shadow').value = c.shadow;
-        document.getElementById('blur').value = c.blur;
+        document.getElementById('bwidth').value = c.bwidth || 0;
+        document.getElementById('borderStyle').value = c.bstyle || 'solid';
+        document.getElementById('boffset').value = c.boffset || 0;
         
-        // ★★★ 修复：彻底重置内发光参数 ★★★
-        document.getElementById('inset').value = c.inset; 
-        // 如果预设里定义了以下参数则应用，否则保持默认或设为0 (针对 classic)
-        if (c.insetDist !== undefined) document.getElementById('insetDist').value = c.insetDist;
-        if (c.insetHighOp !== undefined) document.getElementById('insetHighOp').value = c.insetHighOp;
-        if (c.insetShadowOp !== undefined) document.getElementById('insetShadowOp').value = c.insetShadowOp;
-        
-        document.getElementById('b2Switch').checked = false;
-        
+        // 3. 边距 (Padding)
         document.getElementById('padLock').checked = true;
         togglePadLock();
         document.getElementById('pady').value = c.pady;
         document.getElementById('padx').value = c.padx;
         updatePad('x'); updatePad('y');
 
+        // 4. 外阴影 (Shadow) - 支持角度和距离了
+        document.getElementById('shadow').value = c.shadow;
+        document.getElementById('shadowAlpha').value = c.shadowAlpha !== undefined ? c.shadowAlpha : 0.18;
+        if (c.shadowDist !== undefined) {
+            document.getElementById('shadowDistance').value = c.shadowDist;
+            document.getElementById('val-shadowDistance').innerText = c.shadowDist;
+        }
+        if (c.shadowAng !== undefined) {
+            document.getElementById('shadowAngle').value = c.shadowAng;
+            document.getElementById('val-shadowAngle').innerText = c.shadowAng;
+        }
+
+        // 5. 内阴影/内发光 (Inset) - 关键部分
+        document.getElementById('inset').value = c.inset;
+        if (c.insetDist !== undefined) document.getElementById('insetDist').value = c.insetDist;
+        if (c.insetAng !== undefined) document.getElementById('insetAng').value = c.insetAng;
+        
+        // 设置内阴影强度
+        if (c.insetHighOp !== undefined) document.getElementById('insetHighOp').value = c.insetHighOp;
+        if (c.insetShadowOp !== undefined) document.getElementById('insetShadowOp').value = c.insetShadowOp;
+
+        // ★★★ 新增：设置内阴影的颜色 (还原你的 #d6d6d6) ★★★
+        if (c.insetHighHex) {
+            document.getElementById('insetHighHex').value = c.insetHighHex;
+            document.getElementById('insetHighC').value = c.insetHighHex;
+        } else {
+            // 默认白色
+            document.getElementById('insetHighHex').value = '#ffffff';
+            document.getElementById('insetHighC').value = '#ffffff';
+        }
+        
+        if (c.insetShadowHex) {
+            document.getElementById('insetShadowHex').value = c.insetShadowHex;
+            document.getElementById('insetShadowC').value = c.insetShadowHex;
+        } else {
+            // 默认黑色
+            document.getElementById('insetShadowHex').value = '#000000';
+            document.getElementById('insetShadowC').value = '#000000';
+        }
+
+        // 6. 其他开关
         document.getElementById('gradBorderSwitch').checked = c.gb || false;
         document.getElementById('sheenSwitch').checked = false;
+        document.getElementById('b2Switch').checked = false;
 
+        // 7. 背景颜色
         const inputs = document.querySelectorAll('.color-in');
         c.colors.forEach((hex, i) => { 
             if(inputs[i]) {
@@ -1724,6 +1882,7 @@ function loadState() {
         if(document.getElementById('padLock').checked) {
              updatePad('x'); updatePad('y');
         }
+syncUIState(); 
         return true;
     }
     return false;
@@ -2122,6 +2281,59 @@ function updateTransferCSS() {
     if(document.getElementById('tab5').classList.contains('active')) update();
 }
 
+// ★★★ 新增功能：贴图一键镜像翻转 ★★★
+function flipSticker(idx) {
+    // 1. 获取当前状态
+    const posId = `sticker${idx}Pos`;
+    const xId = `sticker${idx}X`;
+    const numXId = `num-s${idx}X`;
+    const rotId = `sticker${idx}Rot`;
+    
+    const currentPos = document.getElementById(posId).value;
+    const currentX = parseFloat(document.getElementById(xId).value);
+    const currentRot = parseFloat(document.getElementById(rotId).value);
+
+    // 2. 计算翻转后的锚点
+    const map = {
+        'tl': 'tr', 'tr': 'tl',
+        'bl': 'br', 'br': 'bl',
+        'lc': 'rc', 'rc': 'lc',
+        'tc': 'tc', 'bc': 'bc', 'center': 'center'
+    };
+    
+    // 3. 应用翻转
+    if (map[currentPos]) {
+        document.getElementById(posId).value = map[currentPos];
+    }
+    
+    // X轴取反 (实现对称移动)
+    const newX = -currentX;
+    document.getElementById(xId).value = newX;
+    document.getElementById(numXId).value = newX;
+
+    // 旋转角度取反 (实现对称倾斜)
+    document.getElementById(rotId).value = -currentRot;
+
+    // 4. 立即更新
+    update();
+}
+
+// ★★★ 新增功能：导入后强制刷新UI状态 (修复导出配置不显示的问题) ★★★
+function syncUIState() {
+    // 1. 刷新转账对齐按钮的高亮
+    const tAlign = document.getElementById('tAlign').value;
+    document.querySelectorAll('.role-btn[id^="btn-ta-"]').forEach(b => b.classList.remove('active'));
+    if (tAlign === 'flex-start') document.getElementById('btn-ta-left')?.classList.add('active');
+    else if (tAlign === 'center') document.getElementById('btn-ta-center')?.classList.add('active');
+    else if (tAlign === 'flex-end') document.getElementById('btn-ta-right')?.classList.add('active');
+
+    // 2. 刷新转账形状控制的显示
+    const tShape = document.getElementById('tShape').value;
+    const isDefault = tShape === 'default';
+    if(document.getElementById('tRadiusControl')) document.getElementById('tRadiusControl').style.display = isDefault ? 'block' : 'none';
+    if(document.getElementById('tSizeControls')) document.getElementById('tSizeControls').style.display = isDefault ? 'grid' : 'none';
+}
+
 /* ---------------- EXISTING UPDATE LOGIC ---------------- */
 function update() {
     const v = (id) => { const el = document.getElementById(id); return el ? el.value : 0; };
@@ -2270,8 +2482,15 @@ const incAvatar = elAvatar ? elAvatar.checked : true;
         sheenLayer = `linear-gradient(${sAng}deg, transparent ${start}%, ${sColorRgba} ${sPos}%, transparent ${end}%)`;
     }
 
+
+
     let targets = [];
     targets.push(document.getElementById('soloBubble'));
+
+targets.push(document.getElementById('soloBubble2')); 
+
+document.querySelectorAll('.av-demo-bubble').forEach(el => targets.push(el)); 
+
     document.querySelectorAll('.sim-bubble-right').forEach(el => targets.push(el));
     document.querySelectorAll('.sim-bubble-left').forEach(el => {
         if (simMode === 'symmetric' || simMode === 'opponent') {
@@ -2549,9 +2768,10 @@ const incAvatar = elAvatar ? elAvatar.checked : true;
     // 控制面板显示
     document.getElementById('avSentControls').style.display = isSentOn ? 'block' : 'none';
     document.getElementById('avRecvControls').style.display = isRecvOn ? 'block' : 'none';
-    ['avSize','avSentScale','avRecvScale'].forEach(id => {
-         if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id);
-    });
+   
+['avSize','avSentScale','avRecvScale', 'avGap', 'rowGap'].forEach(id => {
+     if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id);
+});
 
     const sel = v('selectorType');
     let selector = ".message-bubble";
@@ -2671,44 +2891,61 @@ ${selector}::${pseudo} {
         }
     }
 // ★★★ 生成头像 CSS ★★★
+    // --- 修改开始：头像逻辑与距离控制 ---
     if (incAvatar) {
         const avSize = v('avSize');
         const avRadius = document.getElementById('avRadius').value;
         const avSentOn = document.getElementById('avSentSwitch').checked;
         const avRecvOn = document.getElementById('avRecvSwitch').checked;
+        
+        // 1. 获取新加的距离值 (如果没有就默认6)
+        const avGap = document.getElementById('avGap') ? document.getElementById('avGap').value : 6;
+        if(document.getElementById('val-avGap')) document.getElementById('val-avGap').innerText = avGap;
+
+document.querySelectorAll('.chat-row').forEach(row => row.style.gap = '0px');
+
+        // 2. 实时更新预览区（让手机模拟画面也生效）
+        // 左侧头像：右边距 = gap
+        document.querySelectorAll('.chat-row.left .chat-avatar').forEach(el => {
+            el.style.marginRight = avGap + 'px';
+            el.style.marginLeft = '0';
+        });
+        // 右侧头像：左边距 = gap
+        document.querySelectorAll('.chat-row.right .chat-avatar').forEach(el => {
+            el.style.marginLeft = avGap + 'px';
+            el.style.marginRight = '0';
+        });
 
         css += `\n\n${cm('======== 头像与头像框设置 ========')}`;
         
-        // 1. 全局头像尺寸与形状
+        // 3. 导出：全局头像尺寸 + 默认右边距
         css += `
 .message-container .message-avatar {
   width: ${avSize}px !important;
   height: ${avSize}px !important;
   border-radius: ${avRadius} !important;
+  margin-right: ${avGap}px !important; /* 接收方间距 */
   position: relative !important;
   overflow: visible !important;
 }`;
 
-        // 2. 发送方特殊边距 (你的要求)
+        // 4. 导出：发送方特殊设置（左边距）
         css += `
-${cm('用户消息的头像设置左边距而不是右边距')}
+${cm('发送方(右侧)头像：清除右边距，设置左边距')}
 .message-container.sent .message-avatar {
   margin-right: 0 !important;
-  margin-left: 6px !important;
+  margin-left: ${avGap}px !important; /* 发送方间距 */
 }`;
 
-        // 3. 生成 ::after 代码的辅助函数
+        // 5. 生成头像框 ::after 代码
         const genAvFrame = (type) => {
             const prefix = type === 'sent' ? 'avSent' : 'avRecv';
             const url = assets[type === 'sent' ? 'avatarSent' : 'avatarRecv'];
             const scale = v(prefix + 'Scale') / 100;
-            const finalSize = (avSize * scale).toFixed(2); // 计算最终尺寸
+            const finalSize = (avSize * scale).toFixed(2);
             const x = v(prefix + 'X');
             const y = v(prefix + 'Y');
             const selector = type === 'sent' ? '.message-container.sent' : '.message-container.received';
-
-            // 修正偏下的问题: 默认 Y 基准是 -50%，这里加上用户偏移
-            // transform: translate(-50%, -50%) translate(x, y)
             
             return `
 ${selector} .message-avatar::after {
@@ -2735,6 +2972,7 @@ ${selector} .message-avatar::after {
             css += genAvFrame('recv');
         }
     }
+    // --- 修改结束 ---
     // ★★★ 核心修改：根据开关决定是否导出恢复数据 ★★★
     if (incData) {
         const fullState = getCurrentStateObj(); 
@@ -2742,6 +2980,44 @@ ${selector} .message-avatar::after {
         const secretCode = btoa(encodeURIComponent(JSON.stringify(fullState)));
         css += `\n\n/* RAINY:${secretCode} */`;
     }
+
+const bAlign = document.getElementById('bubbleAlign') ? document.getElementById('bubbleAlign').value : 'flex-start';
+  const rowGap = document.getElementById('rowGap') ? document.getElementById('rowGap').value : 18;
+    
+    // 更新数字显示
+    if(document.getElementById('val-rowGap')) document.getElementById('val-rowGap').innerText = rowGap;
+
+    // --- 模拟区 (Tab 4) 更新 ---
+    // 给每一行增加下边距 (margin 支持负数，实现重叠)
+    document.querySelectorAll('.chat-row').forEach(row => {
+        row.style.alignItems = bAlign;
+        row.style.marginBottom = rowGap + 'px';
+    });
+
+    // --- Solo 预览区 (Tab 0-3) 更新 ---
+    // 因为 gap 不支持负数，所以我们这里也必须用 margin
+    // 1. 先确保容器没有 gap
+    const pWrapper = document.getElementById('previewWrapper');
+    if (pWrapper) pWrapper.style.gap = '0px';
+
+    // 2. 给第一个气泡加下边距，撑开它和第二个气泡的距离
+    const solo1 = document.getElementById('soloBubble');
+    if (solo1) solo1.style.marginBottom = rowGap + 'px';
+    
+    // 如果有转账 demo 或者是头相预览，给它们也加上边距以防万一
+    const transDemo = document.getElementById('transferDemo');
+    if (transDemo && transDemo.style.display !== 'none') {
+        transDemo.style.marginBottom = rowGap + 'px';
+    }
+
+    // 3. 生成 CSS 导出代码
+    // 我们需要修改 .message-container (它是每一行消息的容器)
+    css += `\n\n${cm('======== 整体布局设置 ========')}
+.message-container {
+  align-items: ${bAlign} !important; /* 控制气泡与头像的垂直对齐 */
+  margin-bottom: ${rowGap}px !important; /* 控制这一行消息与下一行的距离 */
+}`;
+
 
     codeOut.innerText = css;
 }
@@ -3080,6 +3356,8 @@ function parseAndImportCSS() {
             // 刷新主预览
             update();
             
+ syncUIState(); 
+
             // 切换回外观页
             switchTab(0);
             alert("✅ 完美还原！\n所有贴图、转账卡片和参数已恢复。");
@@ -3127,6 +3405,8 @@ window.addEventListener('load', () => {
 document.querySelectorAll('.sim-transfer-row').forEach(el => el.style.display = 'none');
 setTimeout(update, 100);
 });
+
+
 </script>
 </body>
 </html>
