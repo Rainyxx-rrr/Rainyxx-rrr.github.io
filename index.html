@@ -308,12 +308,340 @@
     40% {transform: translateY(-10px);}
     60% {transform: translateY(-5px);}
 }
+/* --- 移动端体验深度优化补丁 START --- */
+@media (max-width: 900px) {
+    /* 1. 增大全局触控目标尺寸 */
+    body { font-size: 14px; } /* 防止iOS输入框自动放大 */
+    
+    /* 2. 优化滑块 (Range) - 解决“不灵敏” */
+    input[type="range"] {
+        height: 24px !important; /* 增加感应高度 */
+        margin: 10px 0 15px !important; /* 增加上下间距，防误触 */
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        width: 28px !important; /* 增大拖动球 */
+        height: 28px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+        margin-top: -10px; /* 垂直居中修正 */
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 3px;
+    }
+
+    /* 3. 优化输入框和下拉菜单 */
+    select, input[type="text"], input[type="number"], .num-input {
+        height: 40px !important; /* 更容易点中 */
+        font-size: 14px !important;
+    }
+    
+    /* 4. 优化 Tab 切换栏 */
+    .tab-header {
+        height: 54px; /* 加高 */
+    }
+    .tab-btn {
+        padding: 0 20px !important; /* 加宽点击区域 */
+        font-size: 14px !important;
+    }
+    
+    /* 5. 增大颜色选择器区域 */
+    .color-wrapper {
+        min-width: 60px;
+    }
+    input[type="color"] {
+        height: 44px !important;
+    }
+
+    /* 6. 优化面板布局与滚动 */
+    .panel {
+        /* 让底部留出更多空间，防止被手机Home条遮挡 */
+        padding-bottom: calc(var(--safe-bottom) + 80px) !important; 
+    }
+    .control-group {
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 20px !important; /* 增加组与组的间距 */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .label-row {
+        margin-bottom: 12px !important;
+    }
+
+    /* 7. 预览区调整 (增加收起按钮的样式) */
+    .preview-area {
+        transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    /* 收起状态 */
+    body.preview-collapsed .preview-area {
+        height: 60px !important; /* 只留一行标题的高度 */
+        overflow: hidden;
+    }
+    body.preview-collapsed .panel {
+        border-radius: 0 !important; /* 面板铺满 */
+    }
+    body.preview-collapsed .canvas-toolbar {
+        display: none; /* 收起时隐藏工具栏 */
+    }
+    
+    /* 8. 修复弹窗和提示 */
+    .welcome-box { width: 90% !important; }
+    .creator-watermark { display: none; } /* 手机上隐藏水印防止遮挡 */
+}
+/* --- 移动端体验深度优化补丁 END --- */
+
+/* --- 移动端滑块微调按钮样式 --- */
+.range-stepper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px; /* 按钮和滑杆的间距 */
+    margin: 8px 0;
+}
+
+/* 按钮样式 */
+.step-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #0066CC;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0; /* 防止按钮被挤压 */
+    user-select: none;
+    transition: all 0.1s;
+    padding: 0;
+    line-height: 1;
+}
+
+.step-btn:active {
+    background: #f0f7ff;
+    border-color: #0066CC;
+    transform: scale(0.95);
+}
+
+/* 让中间的滑块占据剩余空间 */
+.range-stepper input[type="range"] {
+    flex: 1; 
+    margin: 0 !important; /* 去掉原有的 margin，由容器控制 */
+    width: auto !important;
+}
+
+/* 针对颜色栏里的小滑块做特殊适配，防止太挤 */
+.color-wrapper .range-stepper {
+    margin: 2px 0;
+}
+.color-wrapper .step-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+/* --- 手机端侧边栏导航样式 --- */
+
+/* 默认隐藏手机导航，电脑端不显示 */
+.mobile-nav-bar, .sidebar-overlay, .sidebar-drawer {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    /* 1. 隐藏原本的 Tab Header */
+    .tab-header {
+        display: none !important;
+    }
+
+    /* 2. 显示手机顶部导航栏 */
+    .mobile-nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 50px;
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        padding: 0 15px;
+        position: relative;
+        z-index: 50;
+        border-radius: 20px 20px 0 0; /* 跟随 Panel 的圆角 */
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .current-tab-title { font-weight: 700; font-size: 15px; color: #333; }
+    
+    .hamburger-btn {
+        background: none; border: none; padding: 5px; cursor: pointer;
+        display: flex; flex-direction: column; gap: 4px;
+    }
+    .hamburger-btn .bar {
+        width: 18px; height: 2px; background: #333; border-radius: 2px;
+    }
+
+    .icon-btn {
+        background: #f5f7fa; border: none; width: 32px; height: 32px;
+        border-radius: 8px; font-size: 16px; color: #555; cursor: pointer;
+        margin-left: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .icon-btn:active { background: #e6e6e6; }
+
+    /* 3. 遮罩层 */
+    .sidebar-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4);
+        z-index: 1000;
+        backdrop-filter: blur(3px);
+        opacity: 0; transition: opacity 0.3s;
+        pointer-events: none; /* 默认不挡点击 */
+    }
+    .sidebar-overlay.active {
+        display: block; opacity: 1; pointer-events: auto;
+    }
+
+    /* 4. 侧边抽屉 */
+    .sidebar-drawer {
+        display: flex; flex-direction: column;
+        position: fixed; top: 0; left: 0; bottom: 0;
+        width: 70%; max-width: 280px;
+        background: #fff;
+        z-index: 1001;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+    }
+    .sidebar-drawer.active {
+        display: flex;
+        transform: translateX(0);
+    }
+
+    .sidebar-header {
+        height: 60px; display: flex; justify-content: space-between; align-items: center;
+        padding: 0 20px; border-bottom: 1px solid #eee;
+    }
+    .sidebar-header h3 { margin: 0; font-size: 18px; }
+    .close-btn {
+        background: none; border: none; font-size: 24px; color: #999; padding: 5px;
+    }
+
+    .sidebar-content {
+        flex: 1; overflow-y: auto; padding: 15px;
+    }
+
+    /* 侧边栏按钮样式 */
+    .side-item {
+        width: 100%; text-align: left; padding: 14px 15px;
+        background: none; border: none;
+        font-size: 14px; color: #444; font-weight: 500;
+        border-radius: 10px; margin-bottom: 5px;
+        transition: background 0.1s;
+    }
+    .side-item:active { background: #f0f7ff; }
+    .side-item.active {
+        background: #e6f0ff; color: #0066CC; font-weight: 600;
+    }
+    .side-item.danger { color: #ff4d4f; }
+    
+    .divider { height: 1px; background: #eee; margin: 10px 0; }
+}
+
+/* --- 预览区悬浮按钮样式 --- */
+.preview-float-controls {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    z-index: 100; /* 保证在最上层 */
+    display: flex;
+    gap: 12px;
+}
+
+.float-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9); /* 半透明白色背景 */
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    color: #555;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.float-btn:active {
+    transform: scale(0.9);
+    background: #f0f7ff;
+    color: #0066CC;
+}
+
+/* 适配：如果你使用了之前那个“收起预览”的按钮 */
+/* 当预览区被收起时，为了防止按钮挡住视线或消失，可以微调位置或隐藏 */
+body.preview-collapsed .preview-float-controls {
+    bottom: 8px;
+    right: 8px;
+}
+body.preview-collapsed .float-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+}
 
     </style>
     <!-- Dynamic CSS Injection for Transfer Preview -->
     <style id="dynamic-transfer-css"></style>
 </head>
 <body>
+
+<!-- === 手机端专用导航结构 START === -->
+<div class="mobile-nav-bar">
+    <div class="nav-left">
+        <button class="hamburger-btn" onclick="toggleSidebar()">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </button>
+        <span class="current-tab-title" id="mobileTitle">外观设置</span>
+    </div>
+    <!-- 把撤销重做放在右上角，方便随时操作 -->
+   
+</div>
+
+<!-- 侧边菜单抽屉 -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-drawer" id="sidebarDrawer">
+    <div class="sidebar-header">
+        <h3>功能菜单</h3>
+        <button class="close-btn" onclick="toggleSidebar()">×</button>
+    </div>
+    <div class="sidebar-content">
+        <!-- 这里的按钮对应原本的 Tab -->
+        <button class="side-item active" onclick="mobileSwitch(0, '外观设置')">外观风格</button>
+        <button class="side-item" onclick="mobileSwitch(1, '质感细节')">质感/尺寸</button>
+        <button class="side-item" onclick="mobileSwitch(2, '蒙版底纹')">蒙版/底纹</button>
+        <button class="side-item" onclick="mobileSwitch(3, '贴图配置')">贴图 (Sticker)</button>
+        <button class="side-item" onclick="mobileSwitch(6, '装饰图层')">多层装饰</button>
+        <button class="side-item" onclick="mobileSwitch(7, '转账卡片')">转账卡片</button>
+        <button class="side-item" onclick="mobileSwitch(9, '头像设置')">头像设置</button>
+        <div class="divider"></div>
+        <button class="side-item" onclick="mobileSwitch(4, '对话模拟')">模拟预览</button>
+        <button class="side-item" onclick="mobileSwitch(5, '导出代码')">导出 CSS</button>
+        <button class="side-item" onclick="mobileSwitch(8, '导入配置')">导入配置</button>
+        
+        <div class="divider"></div>
+        <button class="side-item danger" onclick="resetMemory(); toggleSidebar()">⚠️ 重置所有设置</button>
+    </div>
+</div>
+<!-- === 手机端专用导航结构 END === -->
 
 <div class="container">
     <div class="panel">
@@ -904,16 +1232,27 @@
         </select>
         
         <!-- 宽高控制 (只有这里有 ID，JS才能找到) -->
-        <div id="tSizeControls" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-            <div>
-                <div class="label-row"><small>宽度 (Width)</small><span class="label-val" id="val-tWidth">200</span></div>
-                <input type="range" id="tWidth" class="save-state" min="150" max="240" value="200" oninput="updateTransferCSS()">
-            </div>
-            <div>
-                <div class="label-row"><small>高度 (Height)</small><span class="label-val" id="val-tHeight">100</span></div>
-                <input type="range" id="tHeight" class="save-state" min="80" max="300" value="100" oninput="updateTransferCSS()">
-            </div>
+       <!-- === 修复后的宽高控制 (改为垂直排列) START === -->
+<div id="tSizeControls" style="display:flex; flex-direction:column; gap:15px; margin-top:10px;">
+    <!-- 宽度控制 -->
+    <div style="width: 100%;">
+        <div class="label-row">
+            <span class="label-text">宽度 (Width)</span>
+            <span class="label-val" id="val-tWidth">200</span>
         </div>
+        <input type="range" id="tWidth" class="save-state" min="150" max="240" value="200" oninput="updateTransferCSS()">
+    </div>
+
+    <!-- 高度控制 (放在下面) -->
+    <div style="width: 100%;">
+        <div class="label-row">
+            <span class="label-text">高度 (Height)</span>
+            <span class="label-val" id="val-tHeight">100</span>
+        </div>
+        <input type="range" id="tHeight" class="save-state" min="80" max="300" value="100" oninput="updateTransferCSS()">
+    </div>
+</div>
+<!-- === 修复后的宽高控制 END === -->
 
         <div id="tRadiusControl" style="margin-top:10px;">
             <div class="label-row"><span class="label-text">圆角半径</span><span class="label-val" id="val-tRadius">12px</span></div>
@@ -1197,6 +1536,17 @@
 
     <!-- 右侧预览区 -->
     <div class="preview-area" id="previewCanvas">
+<!-- === 悬浮撤销/重做按钮 (放在预览区内部) START === -->
+<div class="preview-float-controls">
+    <button class="float-btn" onclick="performUndo()" title="撤销">
+        <span style="transform: scaleX(-1); display:inline-block;">➜</span>
+    </button>
+    <button class="float-btn" onclick="performRedo()" title="重做">
+        ➜
+    </button>
+</div>
+<!-- === 悬浮撤销/重做按钮 END === -->
+
         <div class="canvas-toolbar">
             <button class="toolbar-btn active" onclick="setCanvas('grid')">网格</button>
             <button class="toolbar-btn" onclick="setCanvas('light')">浅色</button>
@@ -3398,6 +3748,96 @@ function parseAndImportCSS() {
         alert("❌ 解析出错：" + e.message);
     }
 }
+/* --- 自动给滑块添加微调按钮的脚本 --- */
+function initMobileRangeSteppers() {
+    // 找到所有 range 类型的 input
+    const ranges = document.querySelectorAll('input[type="range"]');
+    
+    ranges.forEach(range => {
+        // 如果已经添加过，就跳过
+        if (range.parentNode.classList.contains('range-stepper')) return;
+
+        // 1. 创建容器
+        const wrapper = document.createElement('div');
+        wrapper.className = 'range-stepper';
+        
+        // 2. 创建减号按钮
+        const btnMinus = document.createElement('button');
+        btnMinus.className = 'step-btn';
+        btnMinus.textContent = '-';
+        // 防止点击按钮触发表单提交等默认行为
+        btnMinus.type = "button"; 
+
+        // 3. 创建加号按钮
+        const btnPlus = document.createElement('button');
+        btnPlus.className = 'step-btn';
+        btnPlus.textContent = '+';
+        btnPlus.type = "button";
+
+        // 4. 获取滑块的步进值 (step)，如果没有设置，默认为 1
+        const getStep = () => {
+            return range.getAttribute('step') ? parseFloat(range.getAttribute('step')) : 1;
+        };
+        
+        // 计算精度，防止 0.1 + 0.2 = 0.3000004 这种情况
+        const getPrecision = (step) => {
+            if (Math.floor(step) === step) return 0;
+            return step.toString().split(".")[1].length || 0;
+        };
+
+        // 5. 绑定点击事件逻辑
+        const updateValue = (direction) => {
+            const step = getStep();
+            const precision = getPrecision(step);
+            let currentVal = parseFloat(range.value);
+            
+            // 计算新值
+            let newVal = currentVal + (direction * step);
+            
+            // 限制最大最小值
+            const min = range.min ? parseFloat(range.min) : 0;
+            const max = range.max ? parseFloat(range.max) : 100;
+            
+            if (newVal < min) newVal = min;
+            if (newVal > max) newVal = max;
+
+            // 赋值 (保留小数位)
+            range.value = newVal.toFixed(precision);
+            
+            // 关键：手动触发 input 事件，让你的 update() 函数知道数值变了
+            // 这样预览区才会实时刷新
+            range.dispatchEvent(new Event('input', { bubbles: true }));
+            // 有些逻辑可能绑定在 change 上
+            range.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        // 点击减号
+        btnMinus.onclick = (e) => { 
+            e.preventDefault(); 
+            updateValue(-1); 
+        };
+        
+        // 点击加号
+        btnPlus.onclick = (e) => { 
+            e.preventDefault(); 
+            updateValue(1); 
+        };
+
+        // 6. DOM 操作：把滑块移动到容器里
+        // 插入 wrapper 到 input 之前
+        range.parentNode.insertBefore(wrapper, range);
+        // 把 减号、input、加号 依次放入 wrapper
+        wrapper.appendChild(btnMinus);
+        wrapper.appendChild(range);
+        wrapper.appendChild(btnPlus);
+    });
+}
+
+// 页面加载完成后立即执行
+window.addEventListener('load', () => {
+    // 延迟一点点执行，确保原有样式已加载
+    setTimeout(initMobileRangeSteppers, 100);
+});
 window.addEventListener('load', () => {
     const savedCanvas = localStorage.getItem('eve_canvas_mode_final');
     if(savedCanvas) setCanvas(savedCanvas);
@@ -3406,6 +3846,54 @@ document.querySelectorAll('.sim-transfer-row').forEach(el => el.style.display = 
 setTimeout(update, 100);
 });
 
+/* --- 侧边栏控制逻辑 --- */
+
+// 打开/关闭 侧边栏
+function toggleSidebar() {
+    const drawer = document.getElementById('sidebarDrawer');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    // 使用 classList.toggle 来切换 active 类
+    const isActive = drawer.classList.toggle('active');
+    
+    if (isActive) {
+        overlay.classList.add('active'); // 显示遮罩
+    } else {
+        overlay.classList.remove('active'); // 隐藏遮罩
+    }
+}
+
+// 手机端切换 Tab 的封装函数
+function mobileSwitch(idx, title) {
+    // 1. 调用原有的切换函数
+    switchTab(idx);
+    
+    // 2. 更新顶部标题
+    document.getElementById('mobileTitle').innerText = title;
+    
+    // 3. 更新侧边栏选中状态
+    document.querySelectorAll('.side-item').forEach(btn => btn.classList.remove('active'));
+    // 找到对应的按钮并高亮 (根据 onclick 内容匹配略显麻烦，这里简单处理)
+    // 实际上因为上面 HTML 是硬编码的顺序，我们可以通过索引来找，但上面的HTML里有divider干扰
+    // 更简单的做法：直接通过文本内容或者手动在HTML里加ID。
+    // 这里为了省事，直接遍历查找
+    const btns = document.querySelectorAll('.side-item');
+    // 映射关系：Tab0->Btn0, Tab1->Btn1 ... 注意跳过 divider
+    // 最简单的方式：
+    // 给HTML里的button加上 id="side-btn-0", id="side-btn-1"...
+    // 下面用更通用的方法：点击的时候把当前点击的按钮设为 active
+    event.target.classList.add('active');
+
+    // 4. 关闭侧边栏
+    toggleSidebar();
+}
+
+// 页面加载时同步一下状态
+window.addEventListener('load', () => {
+    // 默认高亮第一个
+    const firstBtn = document.querySelector('.side-item');
+    if(firstBtn) firstBtn.classList.add('active');
+});
 
 </script>
 </body>
