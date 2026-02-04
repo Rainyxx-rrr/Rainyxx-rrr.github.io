@@ -392,58 +392,53 @@
 }
 /* --- 移动端体验深度优化补丁 END --- */
 
-/* --- 移动端滑块微调按钮样式 --- */
+/* --- 移动端滑块微调按钮样式 (防误触优化版) --- */
 .range-stepper {
     display: flex;
     align-items: center;
     width: 100%;
-    gap: 8px; /* 按钮和滑杆的间距 */
-    margin: 8px 0;
+    gap: 15px; /* 拉大间距，防止误触 */
+    margin: 12px 0;
+    touch-action: manipulation;
 }
 
 /* 按钮样式 */
 .step-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 40px; /* 加大触控区域 */
+    height: 40px;
+    border-radius: 12px;
     border: 1px solid #d9d9d9;
     background: #fff;
     color: #0066CC;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    flex-shrink: 0; /* 防止按钮被挤压 */
+    flex-shrink: 0;
     user-select: none;
-    transition: all 0.1s;
+    -webkit-user-select: none; /* iOS 必须加这个防止长按选中 */
     padding: 0;
     line-height: 1;
+    transition: background 0.1s, transform 0.1s;
+    /* 关键：消除移动端点击的高亮背景块 */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .step-btn:active {
     background: #f0f7ff;
     border-color: #0066CC;
-    transform: scale(0.95);
+    transform: scale(0.9); /* 按下明显缩小，提供视觉反馈 */
 }
 
-/* 让中间的滑块占据剩余空间 */
-.range-stepper input[type="range"] {
-    flex: 1; 
-    margin: 0 !important; /* 去掉原有的 margin，由容器控制 */
-    width: auto !important;
-}
-
-/* 针对颜色栏里的小滑块做特殊适配，防止太挤 */
-.color-wrapper .range-stepper {
-    margin: 2px 0;
-}
+/* 颜色栏里的小按钮适配 */
+.color-wrapper .range-stepper { gap: 8px; margin: 4px 0; }
 .color-wrapper .step-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 14px;
-    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    border-radius: 6px;
 }
 
 /* --- 手机端侧边栏导航样式 --- */
@@ -1162,7 +1157,7 @@ body.preview-collapsed .float-btn {
 <button onclick="clearImageAsset('sticker1')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;" title="清除图片">🗑️</button>
                     </div>
 
-                    <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点</span></div>
+                    <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点（请选择正确的位置防止长气泡贴图偏移）</span></div>
                     <select id="sticker1Pos" class="save-state" onchange="update()">
                         <option value="br">右下角 (Bottom-Right)</option>
                         <option value="bl">左下角 (Bottom-Left)</option>
@@ -1237,7 +1232,7 @@ body.preview-collapsed .float-btn {
 <button onclick="clearImageAsset('sticker2')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:12px; padding:0 10px;" title="清除图片">🗑️</button>
                     </div>
 
-                    <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点</span></div>
+                    <div class="label-row" style="margin-top:10px;"><span class="label-text">位置锚点（请选择正确的位置防止长气泡贴图偏移）</span></div>
                     <select id="sticker2Pos" class="save-state" onchange="update()">
                         <option value="tl">左上角 (Top-Left)</option>
                         <option value="tr">右上角 (Top-Right)</option>
@@ -1578,8 +1573,8 @@ body.preview-collapsed .float-btn {
 </label>
                 <input type="checkbox" id="optComm" class="save-state" checked onchange="update()"> 包含代码注释
             </label>
-            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer; color:#666;" title="建议保留，否则以后无法通过代码还原配置">
-                <input type="checkbox" id="optData" class="save-state" checked onchange="update()"> 包含恢复数据(⚠️⚠️复制在eve的时候不用这个，只是自己保存调整气泡用）
+            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer; color:#666;" title="推荐单独导出，若后期想重新修改可以一键还原。">
+                <input type="checkbox" id="optData" class="save-state"  onchange="update()"> 包含恢复数据(⚠️⚠️复制在eve的时候不用这个，只是自己保存调整气泡用）
             </label>
         </div>
     </div>
@@ -1632,6 +1627,29 @@ body.preview-collapsed .float-btn {
 
     <!-- 右侧预览区 -->
     <div class="preview-area" id="previewCanvas">
+
+<div style="
+        position: absolute;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.35); /* 黑色半透明背景 */
+        color: rgba(255, 255, 255, 0.9); /* 白色微透文字 */
+        padding: 8px 15px;
+        border-radius: 50px;
+        font-size: 11px;
+        line-height: 1.5;
+        text-align: center;
+        pointer-events: none; /* 关键：让鼠标穿透，不挡住下面的操作 */
+        z-index: 90;
+        width: 90%;
+        max-width: 400px;
+        backdrop-filter: blur(2px);
+    ">
+        图片请上传 URL，否则代码过长会导致浏览器卡死。<br>
+        若长气泡贴图错位，请检查贴图的“位置锚点”是否选择正确。
+    </div>
+
 <!-- === 悬浮撤销/重做按钮 (放在预览区内部) START === -->
 <div class="preview-float-controls">
     <button class="float-btn" onclick="performUndo()" title="撤销">
@@ -3910,90 +3928,106 @@ function parseAndImportCSS() {
     }
 }
 /* --- 自动给滑块添加微调按钮的脚本 --- */
+/* --- 自动给滑块添加微调按钮的脚本 (防归零+防卡顿终极版) --- */
 function initMobileRangeSteppers() {
-    // 找到所有 range 类型的 input
     const ranges = document.querySelectorAll('input[type="range"]');
     
     ranges.forEach(range => {
-        // 如果已经添加过，就跳过
         if (range.parentNode.classList.contains('range-stepper')) return;
 
-        // 1. 创建容器
+        // 记录该滑块的“上一次正确值”，初始化为当前值
+        // 这是防止归零的最后一道防线
+        range.dataset.lastSafeValue = range.value;
+
         const wrapper = document.createElement('div');
         wrapper.className = 'range-stepper';
         
-        // 2. 创建减号按钮
         const btnMinus = document.createElement('button');
         btnMinus.className = 'step-btn';
         btnMinus.textContent = '-';
-        // 防止点击按钮触发表单提交等默认行为
         btnMinus.type = "button"; 
 
-        // 3. 创建加号按钮
         const btnPlus = document.createElement('button');
         btnPlus.className = 'step-btn';
         btnPlus.textContent = '+';
         btnPlus.type = "button";
 
-        // 4. 获取滑块的步进值 (step)，如果没有设置，默认为 1
-        const getStep = () => {
-            return range.getAttribute('step') ? parseFloat(range.getAttribute('step')) : 1;
-        };
-        
-        // 计算精度，防止 0.1 + 0.2 = 0.3000004 这种情况
-        const getPrecision = (step) => {
-            if (Math.floor(step) === step) return 0;
-            return step.toString().split(".")[1].length || 0;
-        };
-
-        // 5. 绑定点击事件逻辑
         const updateValue = (direction) => {
-            const step = getStep();
-            const precision = getPrecision(step);
+            // 1. 获取步长和精度
+            let step = parseFloat(range.getAttribute('step'));
+            if (isNaN(step) || step === 0) step = 1;
+
+            // 计算精度修正（解决 0.1+0.2 问题）
+            const stepStr = step.toString();
+            const precision = stepStr.includes('.') ? stepStr.split('.')[1].length : 0;
+            const multiplier = Math.pow(10, precision);
+
+            // 2. 获取当前值 [核心修改]
             let currentVal = parseFloat(range.value);
             
-            // 计算新值
-            let newVal = currentVal + (direction * step);
-            
-            // 限制最大最小值
+            // [防归零逻辑]：如果读取失败(NaN)，立刻从 dataset 调取上一次的正确值
+            // 如果连 dataset 都没有，才去读 min
+            if (isNaN(currentVal)) {
+                if (range.dataset.lastSafeValue && !isNaN(parseFloat(range.dataset.lastSafeValue))) {
+                    currentVal = parseFloat(range.dataset.lastSafeValue);
+                } else {
+                    return; // 彻底放弃这次操作，保持现状，绝不归零
+                }
+            }
+
+            // 3. 计算新值
+            // 先放大为整数计算，再除回来，避免精度丢失
+            let newVal = (Math.round(currentVal * multiplier) + (direction * Math.round(step * multiplier))) / multiplier;
+
+            // 4. 范围限制
             const min = range.min ? parseFloat(range.min) : 0;
             const max = range.max ? parseFloat(range.max) : 100;
-            
             if (newVal < min) newVal = min;
             if (newVal > max) newVal = max;
 
-            // 赋值 (保留小数位)
-            range.value = newVal.toFixed(precision);
+            // 5. 应用新值
+            const finalVal = newVal.toFixed(precision);
+            range.value = finalVal;
             
-            // 关键：手动触发 input 事件，让你的 update() 函数知道数值变了
-            // 这样预览区才会实时刷新
-            range.dispatchEvent(new Event('input', { bubbles: true }));
-            // 有些逻辑可能绑定在 change 上
-            range.dispatchEvent(new Event('change', { bubbles: true }));
+            // [关键]：更新“安全值”记忆
+            range.dataset.lastSafeValue = finalVal;
+
+            // 6. [防卡顿逻辑]：异步触发更新
+            // 先让滑块数字变了，给浏览器 10ms 喘息时间，再去执行繁重的 update()
+            // 这样连续点击时，按钮反应会很快，不会觉得“粘手”
+            setTimeout(() => {
+                range.dispatchEvent(new Event('input', { bubbles: true }));
+                range.dispatchEvent(new Event('change', { bubbles: true }));
+            }, 10);
         };
 
-        // 点击减号
+        // 绑定事件
+        // 使用 onclick 即可，配合 CSS 的 user-select:none 体验最佳
         btnMinus.onclick = (e) => { 
             e.preventDefault(); 
+            e.stopPropagation(); // 防止冒泡触发其他奇怪点击
             updateValue(-1); 
         };
-        
-        // 点击加号
         btnPlus.onclick = (e) => { 
             e.preventDefault(); 
+            e.stopPropagation();
             updateValue(1); 
         };
 
-        // 6. DOM 操作：把滑块移动到容器里
-        // 插入 wrapper 到 input 之前
+        // 额外：监听滑块本身的手动拖动，也更新安全值，防止拖动后点按钮又跳回旧值
+        range.addEventListener('input', function() {
+            if (!isNaN(parseFloat(this.value))) {
+                this.dataset.lastSafeValue = this.value;
+            }
+        });
+
+        // 组装 DOM
         range.parentNode.insertBefore(wrapper, range);
-        // 把 减号、input、加号 依次放入 wrapper
         wrapper.appendChild(btnMinus);
         wrapper.appendChild(range);
         wrapper.appendChild(btnPlus);
     });
 }
-
 // 页面加载完成后立即执行
 window.addEventListener('load', () => {
     // 延迟一点点执行，确保原有样式已加载
