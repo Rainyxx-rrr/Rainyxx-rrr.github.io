@@ -596,6 +596,75 @@ body.preview-collapsed .float-btn {
     font-size: 14px;
 }
 
+/* === 修复滑块溢出 & 解决常驻显示 BUG 的修正版 === */
+@media (max-width: 900px) {
+    /* 1. 针对 Grid 布局的区域（圆角、内边距、转账尺寸、头像偏移） */
+    /* 修复原理：去掉 display:flex !important，改用 grid 样式控制垂直 */
+    #cornerControls, 
+    #pad-independent, 
+    #tSizeControls, 
+    #avSentControls > div[style*="grid"], 
+    #avRecvControls > div[style*="grid"] {
+        /* 关键：不写 display 属性，让 JS 决定显示还是隐藏 */
+        /* 当它显示时，强制变成一列 (垂直布局) */
+        grid-template-columns: 1fr !important; 
+        width: 100% !important;
+        gap: 15px !important;
+    }
+
+    /* 2. 针对 Flex 布局的区域（大多数一行两个的控制组） */
+    /* 只要是原本使用了 flex 的 div，强制改为垂直方向 */
+    .control-group > div[style*="display:flex"] {
+        flex-direction: column !important;
+        gap: 15px !important;
+        width: 100% !important;
+    }
+
+    /* 3. 颜色选择器：改为双列网格 */
+    .color-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 15px !important;
+    }
+    .color-wrapper {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* 4. 保持水平排列的例外情况 */
+    /* 标签行 */
+    .label-row, .label-row[style*="display:flex"] { 
+        flex-direction: row !important; 
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+
+    /* 微调按钮组 ( - O + ) */
+    .range-stepper { 
+        display: flex !important;
+        flex-direction: row !important; 
+        width: 100% !important;
+        margin: 10px 0 !important;
+    }
+
+    /* Tab 栏和历史按钮 */
+    .tab-header, .history-controls {
+        flex-direction: row !important;
+    }
+    
+    /* 图片上传行稍微允许换行，防止挤压 */
+    .control-group > div > div[style*="display:flex"] {
+        flex-wrap: wrap !important;
+    }
+
+    /* 5. 防溢出保险 */
+    input[type="range"], .range-stepper, select, input[type="text"] {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+/* === 修正版 END === */
+
     </style>
     <!-- Dynamic CSS Injection for Transfer Preview -->
     <style id="dynamic-transfer-css"></style>
@@ -816,7 +885,7 @@ body.preview-collapsed .float-btn {
 
             <div class="control-group">
                 <div class="label-row">
-                    <span class="label-text">气泡形状 (四角独立控制)</span>
+                    <span class="label-text">气泡形状 (若调节一角时其他角动，请调节气泡高度或减小圆角尺寸)</span>
                     <label style="font-size:11px; display:flex; align-items:center;">
                         <input type="checkbox" id="lockCorners" class="save-state" checked onchange="updateLock()"> 锁定
                     </label>
@@ -1561,7 +1630,7 @@ body.preview-collapsed .float-btn {
                 1
             </div>
             <div class="preview-bubble" id="soloBubble2">
-                图片请使用url上传
+                这里是一个气泡浏览喔，快来试试试试试试试试试试吧
             </div>
               <div class="transfer-card-demo" id="transferDemo" style="display:none;">
                 <!-- 标题行：图标 + 文字 -->
@@ -1911,6 +1980,8 @@ function renderDecorationList() {
         `;
         list.appendChild(item);
     });
+setTimeout(initMobileRangeSteppers, 50); 
+
 }
 
 
@@ -1989,8 +2060,14 @@ function applyPreset(name) {
         document.getElementById('alpha').value = c.alpha;
         document.querySelectorAll('.alpha-in').forEach(el => el.value = c.alpha);
         
-        // 2. 尺寸与边框
-        document.getElementById('radius').value = c.radius;
+        const rVal = c.radius;
+        document.getElementById('radius').value = rVal;
+        
+        // ★★★ 新增：同时更新四个隐形的独立圆角滑块，防止解锁后跳变
+        ['r_tl', 'r_tr', 'r_bl', 'r_br'].forEach(id => {
+            document.getElementById(id).value = rVal;
+        });
+
         document.getElementById('bwidth').value = c.bwidth || 0;
         document.getElementById('borderStyle').value = c.bstyle || 'solid';
         document.getElementById('boffset').value = c.boffset || 0;
@@ -2083,10 +2160,32 @@ function uploadCanvasBg(input) {
     }
 }
 
+// === 修复 1：形状锁定切换逻辑 ===
 function updateLock() {
     const locked = document.getElementById('lockCorners').checked;
+    const mainRadius = document.getElementById('radius').value;
+
+    // UI 显示切换
     document.getElementById('unifiedRadiusControl').style.display = locked ? 'block' : 'none';
+    document.getElementById('cornerControls').style.display = locked ? 'grid' : 'grid'; // 保持 grid 布局，但通过外层显隐控制
+    
+    // 关键修复：当【取消锁定】瞬间，把主圆角的值同步给四个独立圆角，防止形状乱跳
+    if (!locked) {
+        ['r_tl', 'r_tr', 'r_bl', 'r_br'].forEach(id => {
+            const el = document.getElementById(id);
+            // 只有当独立圆角还没被动过（或者为了体验流畅），强制同步一次
+            // 这里我们选择强制同步，保证从“统一”切换到“独立”时形状是连续的
+            el.value = mainRadius;
+            
+            // 如果有手机端微调按钮，手动触发更新事件让按钮显示的数值也变
+            el.dispatchEvent(new Event('input'));
+            el.dispatchEvent(new Event('change'));
+        });
+    }
+
+    // 控制面板显隐
     document.getElementById('cornerControls').style.display = locked ? 'none' : 'grid';
+    
     update();
 }
 
@@ -2766,9 +2865,29 @@ const incAvatar = elAvatar ? elAvatar.checked : true;
         finalGrad = `radial-gradient(circle at ${gradState.x}% ${gradState.y}%, ${gradBase})`;
     }
 
+    // --- 气泡圆角逻辑修复 START ---
     const isLocked = document.getElementById('lockCorners').checked;
-    let radiusVal = isLocked ? `${v('radius')}px` : `${v('r_tl')}px ${v('r_tr')}px ${v('r_br')}px ${v('r_bl')}px`;
+    let radiusVal;
 
+    if (isLocked) {
+        // 1. 锁定状态：读取主圆角数值
+        const mainR = v('radius');
+        radiusVal = `${mainR}px`;
+        
+        // 2. 关键修复：既然锁定了，就把四个隐形的独立滑块也改成这个值
+        // 这样当你下次点击“解锁”时，四个角会平滑继承现在的数值，不会乱跳
+        ['r_tl', 'r_tr', 'r_bl', 'r_br'].forEach(id => {
+            const el = document.getElementById(id);
+            // 只有数值不一样时才赋值，避免死循环
+            if(el && el.value !== mainR) {
+                el.value = mainR;
+            }
+        });
+    } else {
+        // 3. 解锁状态：分别读取四个角的数值
+        radiusVal = `${v('r_tl')}px ${v('r_tr')}px ${v('r_br')}px ${v('r_bl')}px`;
+    }
+    // --- 气泡圆角逻辑修复 END ---
     const ins = v('inset');
     const sColorHex = document.getElementById('shadowColor').value;
     const sColorA = document.getElementById('shadowAlpha').value;
