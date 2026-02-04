@@ -795,6 +795,33 @@ body.preview-collapsed .float-btn {
 
             <div class="control-group">
                 <div class="label-row"><span class="label-text">文字样式</span></div>
+
+<!-- === 插入开始：文字对齐控制 === -->
+<div class="control-group">
+    <div class="label-row"><span class="label-text">文字对齐方式 (Alignment)</span></div>
+    <div style="display:flex; gap:10px;">
+        <div style="flex:1">
+            <div class="label-row" style="margin:0"><small>水平方向</small></div>
+            <select id="textAlignH" class="save-state" onchange="update()">
+                <option value="left">靠左 (Left)</option>
+                <option value="center">居中 (Center)</option>
+                <option value="right">靠右 (Right)</option>
+            </select>
+        </div>
+        <div style="flex:1">
+            <div class="label-row" style="margin:0"><small>垂直方向</small></div>
+            <select id="textAlignV" class="save-state" onchange="update()">
+                <option value="flex-start">顶部 (Top)</option>
+                <option value="center">居中 (Middle)</option>
+                <option value="flex-end">底部 (Bottom)</option>
+            </select>
+        </div>
+    </div>
+    <div class="warn-box" style="margin-top:5px; font-size:10px;">
+        提示：垂直对齐需要气泡有一定的高度（或设置了最小高度）才能看出效果。
+    </div>
+</div>
+<!-- === 插入结束 === -->
                 <div style="display:flex; gap:12px;">
                     <div class="color-wrapper" style="flex:1">
                         <input type="color" id="customFontColor" class="save-state" value="#444444" oninput="syncColor('customFontColor', 'fontHex'); toggleAutoColor(false); update()">
@@ -1630,7 +1657,7 @@ body.preview-collapsed .float-btn {
                 1
             </div>
             <div class="preview-bubble" id="soloBubble2">
-                这里是一个气泡浏览喔，快来试试试试试试试试试试吧
+                所有图片请务必使用url上传
             </div>
               <div class="transfer-card-demo" id="transferDemo" style="display:none;">
                 <!-- 标题行：图标 + 文字 -->
@@ -2786,6 +2813,9 @@ function syncUIState() {
 /* ---------------- EXISTING UPDATE LOGIC ---------------- */
 function update() {
     const v = (id) => { const el = document.getElementById(id); return el ? el.value : 0; };
+
+ const alignH = document.getElementById('textAlignH') ? document.getElementById('textAlignH').value : 'left';
+    const alignV = document.getElementById('textAlignV') ? document.getElementById('textAlignV').value : 'flex-start';
     
     // ★★★ 新增：读取导出选项 ★★★
     // 如果找不到元素(兼容旧版HTML)，默认视为 true
@@ -3096,6 +3126,10 @@ document.querySelectorAll('.av-demo-bubble').forEach(el => targets.push(el));
         s.border = borderVal;
         s.outline = outlineVal;
         s.outlineOffset = outlineOffVal;
+s.display = "flex";
+        s.flexDirection = "column";
+        s.justifyContent = alignV; // 垂直对齐
+        s.textAlign = alignH;      // 水平对齐
 
         t.querySelectorAll('.p-sticker-1, .p-sticker-2, .p-gb-border').forEach(el => el.remove());
 
@@ -3248,16 +3282,24 @@ document.querySelectorAll('.av-demo-bubble').forEach(el => targets.push(el));
     if (sel === 'received') selector = ".message-container.received .message-bubble";
 
     // ★★★ 生成 CSS 字符串 (动态插入注释) ★★★
-    let css = `${selector} {${cm('基础定位与防错位')}
+      let css = `${selector} {${cm('基础定位与防错位')}
   position: relative !important;
   overflow: visible !important;
   box-sizing: border-box !important;
   padding: ${v('pt')}px ${v('pr')}px ${v('pb')}px ${v('pl')}px !important;
   border-radius: ${radiusVal} !important;
+  
+  ${cm('文字对齐设置')}
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: ${alignV} !important; /* 垂直对齐 */
+  text-align: ${alignH} !important;      /* 水平对齐 */
+
   ${cm('尺寸限制')}
   max-width: ${v('maxWidth')}% !important;
   min-width: ${v('minWidth')}px !important;
   min-height: ${v('minHeight')}px !important;
+
   ${cm('清除底色')}
   background-color: transparent !important;
   ${cm('背景层 (含装饰+底纹)')}
