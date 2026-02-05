@@ -1351,20 +1351,50 @@ body.preview-collapsed .float-btn {
         </div>
     </div>
 
-    <!-- 2. 背景设置 -->
+   <!-- 2. 背景设置 (重构版：支持双向背景 + 透明度) -->
     <div class="control-group">
-        <div class="label-row"><span class="label-text">背景图层</span></div>
-        <input type="file" onchange="uploadImg(this, 'tBg')" style="font-size:12px; margin-bottom:5px;"><button onclick="clearImageAsset('tBg')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 10px;">清除</button>
-        <input type="text" id="tBgUrl" placeholder="背景图片 URL" class="save-state" style="flex:1; width:100%; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+        <div class="label-row">
+            <span class="label-text">背景图片设置</span>
+            <label style="font-size:11px; display:flex; align-items:center;">
+                <input type="checkbox" id="tDualBgSwitch" class="save-state" onchange="updateTransferCSS()"> 区分收/发背景
+            </label>
+        </div>
+
+        <!-- 发送方 / 默认背景 -->
+        <div id="tBgSentArea" style="margin-top:10px;">
+            <div class="label-row"><small id="tBgLabel">发送方(或默认) 图片</small></div>
+            <input type="file" onchange="uploadImg(this, 'tBg')" style="font-size:12px; margin-bottom:5px;">
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="tBgUrl" placeholder="图片 URL" class="save-state" style="flex:1; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+                <button onclick="clearImageAsset('tBg')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 8px;">🗑️</button>
+            </div>
+        </div>
+
+        <!-- 接收方背景 (隐藏式) -->
+        <div id="tBgRecvArea" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #eee;">
+            <div class="label-row"><small style="color:#e91e63">接收方 图片</small></div>
+            <input type="file" onchange="uploadImg(this, 'tBgRecv')" style="font-size:12px; margin-bottom:5px;">
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="tBgRecvUrl" placeholder="接收方图片 URL" class="save-state" style="flex:1; padding:6px; font-size:11px; border:1px solid #ddd; border-radius:4px;" onchange="updateTransferCSS()">
+                <button onclick="clearImageAsset('tBgRecv')" style="border:1px solid #ff4d4f; color:#ff4d4f; background:#fff; border-radius:4px; cursor:pointer; font-size:11px; padding:0 8px;">🗑️</button>
+            </div>
+        </div>
         
-        <div class="label-row" style="margin-top:5px;"><span class="label-text">背景适配</span></div>
-        <select id="tBgSize" class="save-state" onchange="updateTransferCSS()">
-            <option value="cover">填充 (Cover)</option>
-            <option value="contain">适应 (Contain)</option>
-        </select>
-        
+        <!-- 背景通用设置：透明度与适配 -->
+        <div style="margin-top:15px; background:#f9f9fa; padding:10px; border-radius:8px;">
+            <div class="label-row"><span class="label-text">背景图片不透明度 (Opacity)</span><span class="label-val" id="val-tBgOp">1.0</span></div>
+            <input type="range" id="tBgOp" class="save-state" min="0" max="1" step="0.05" value="1" oninput="updateTransferCSS()">
+            
+            <div class="label-row" style="margin-top:10px;"><span class="label-text">填充方式</span></div>
+            <select id="tBgSize" class="save-state" onchange="updateTransferCSS()">
+                <option value="cover">拉伸填充 (Cover)</option>
+                <option value="contain">完整显示 (Contain)</option>
+            </select>
+        </div>
+
+        <!-- 渐变叠加保持不变... -->
         <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
-            <span class="label-text">叠加渐变颜色</span>
+            <span class="label-text">叠加渐变底色 (位于图片下方)</span>
             <input type="checkbox" id="tGradSwitch" class="save-state" onchange="updateTransferCSS()">
         </div>
         <div id="tGradControls" style="display:none; margin-top:5px; background:#f5f5f7; padding:10px; border-radius:8px;">
@@ -1374,8 +1404,6 @@ body.preview-collapsed .float-btn {
              </div>
              <div class="label-row" style="margin-top:5px;"><span class="label-text">渐变角度</span></div>
              <input type="range" id="tGradAng" class="save-state" min="0" max="360" value="135" oninput="updateTransferCSS()">
-             <div class="label-row"><span class="label-text">不透明度</span></div>
-             <input type="range" id="tGradOp" class="save-state" min="0" max="1" step="0.05" value="0.7" oninput="updateTransferCSS()">
         </div>
     </div>
 
@@ -1396,21 +1424,29 @@ body.preview-collapsed .float-btn {
             <div class="label-row" style="margin-top:10px;"><span class="label-text">大小 (Scale %)</span><span class="label-val" id="val-tDecoSize">100</span></div>
             <input type="range" id="tDecoSize" class="save-state" min="10" max="300" value="100" oninput="updateTransferCSS()">
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <div><small>X 偏移</small><input type="range" id="tDecoX" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()"></div>
-                <div><small>Y 偏移</small><input type="range" id="tDecoY" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()"></div>
-            </div>
+          <!-- [替换目标：位于 id="tDecoControls" 内部的 X/Y 偏移控制区] -->
+
+<!-- 旧代码是 display:grid，替换为下面的垂直 flex 布局，防止挤压 -->
+<div style="display:flex; flex-direction:column; gap:15px; margin-top:10px;">
+    <div>
+        <div class="label-row"><small>X 偏移 (Horizontal)</small></div>
+        <input type="range" id="tDecoX" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()">
+    </div>
+    <div>
+        <div class="label-row"><small>Y 偏移 (Vertical)</small></div>
+        <input type="range" id="tDecoY" class="save-state" min="-150" max="150" value="0" oninput="updateTransferCSS()">
+    </div>
+</div>
             
             <div class="label-row" style="margin-top:10px;"><span class="label-text">旋转</span><span class="label-val" id="val-tDecoRot">0°</span></div>
             <input type="range" id="tDecoRot" class="save-state" min="-180" max="180" value="0" oninput="updateTransferCSS()">
         </div>
     </div>
 
-    <!-- 4. 内容与排版 (核心修改) -->
+    <!-- 4. 内容与排版 (新增：文字阴影控制) -->
     <div class="control-group">
         <div class="label-row"><span class="label-text">排版布局 & 内容</span></div>
-        
-        <!-- 对齐按钮 (HTML必须有这些ID) -->
+        <!-- 对齐按钮 -->
         <div class="role-switcher" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom:12px;">
             <button class="role-btn active" id="btn-ta-left" onclick="setTAlign('flex-start', this)">靠左</button>
             <button class="role-btn" id="btn-ta-center" onclick="setTAlign('center', this)">居中</button>
@@ -1428,14 +1464,41 @@ body.preview-collapsed .float-btn {
         <div class="label-row" style="margin-top:8px;"><span class="label-text">整体内边距</span></div>
         <input type="range" id="tPad" class="save-state" min="0" max="60" value="15" oninput="updateTransferCSS()">
 
-        <!-- 文字颜色与替换 -->
+        <!-- 文字颜色与阴影 (新功能) -->
         <div class="label-row" style="margin-top:15px; border-top:1px dashed #eee; padding-top:10px;">
-            <span class="label-text">全局文字颜色</span>
+            <span class="label-text">文字样式 & 阴影</span>
         </div>
-        <div class="color-wrapper">
+        <div class="color-wrapper" style="margin-bottom:10px;">
+            <div class="label-row" style="margin:0"><small>主文字颜色</small></div>
             <input type="color" id="tTextColor" value="#ffffff" class="save-state" oninput="updateTransferCSS()">
         </div>
 
+        <!-- 阴影控制区：独立一行避免太窄 -->
+        <div style="background:#f0f0f0; padding:10px; border-radius:8px;">
+            <div class="label-row">
+                <span class="label-text">文字阴影 (Text Shadow)</span>
+                <input type="checkbox" id="tShadowSwitch" class="save-state" onchange="updateTransferCSS()">
+            </div>
+            <div id="tShadowControls" style="display:none; margin-top:8px;">
+                <div class="label-row"><small>阴影颜色</small></div>
+                <input type="color" id="tShadowColor" value="#000000" class="save-state" oninput="updateTransferCSS()" style="width:100%; height:30px;">
+                
+                <div style="margin-top:8px;">
+                    <div class="label-row"><small>X 偏移</small><span class="label-val" id="val-tsX">1</span></div>
+                    <input type="range" id="tsX" class="save-state" min="-20" max="20" value="1" oninput="updateTransferCSS()">
+                </div>
+                <div style="margin-top:8px;">
+                    <div class="label-row"><small>Y 偏移</small><span class="label-val" id="val-tsY">2</span></div>
+                    <input type="range" id="tsY" class="save-state" min="-20" max="20" value="2" oninput="updateTransferCSS()">
+                </div>
+                <div style="margin-top:8px;">
+                    <div class="label-row"><small>模糊 (Blur)</small><span class="label-val" id="val-tsB">3</span></div>
+                    <input type="range" id="tsB" class="save-state" min="0" max="20" value="3" oninput="updateTransferCSS()">
+                </div>
+            </div>
+        </div>
+
+        <!-- 标题替换保持不变 -->
         <div class="label-row" style="margin-top:10px;">
             <span class="label-text">修改标题内容</span>
             <input type="checkbox" id="tContentSwitch" class="save-state" onchange="updateTransferCSS()">
@@ -1446,6 +1509,7 @@ body.preview-collapsed .float-btn {
             <input type="range" id="tTitleSize" class="save-state" min="10" max="30" value="14" oninput="updateTransferCSS()">
         </div>
     </div>
+
     
     <!-- 5. 确认按钮 -->
     <div class="control-group" style="margin-top:20px;">
@@ -1647,7 +1711,7 @@ body.preview-collapsed .float-btn {
         backdrop-filter: blur(2px);
     ">
         图片请上传 URL，否则代码过长会导致浏览器卡死。<br>
-        若长气泡贴图错位，请检查贴图的“位置锚点”是否选择正确。
+        若长气泡贴图错位，请检查贴图的“位置锚点”是否选择正确。<br>请勿删除代码顶部水印 互相尊重 十分感谢
     </div>
 
 <!-- === 悬浮撤销/重做按钮 (放在预览区内部) START === -->
@@ -1753,11 +1817,22 @@ body.preview-collapsed .float-btn {
 </div>
 
 <script>
-let assets = { bg: "none", sticker1: null, sticker2: null, tBg: "none", tDeco: "none", avatarSent: "none", avatarRecv: "none" };
+let assets = { 
+    bg: "none", sticker1: null, sticker2: null, 
+    tBg: "none", tBgRecv: "none", // <--- 新增 tBgRecv
+    tDeco: "none", avatarSent: "none", avatarRecv: "none" 
+};
 let canvasBg = "";
 let gradState = { x: 80, y: 80, angle: 135 };
 let simMode = 'standard'; 
 let decorations = []; // List of decoration layers
+
+
+function vOpt(prop, val, defaultVal, isImportant = true) {
+    // 弱类型比较，处理 '0' == 0 的情况
+    if (val == defaultVal) return ''; 
+    return `${prop}: ${val}${isImportant ? ' !important' : ''};`;
+}
 
 // ★★★ 点击确定按钮后执行的功能 ★★★
 function applyTransferToSim() {
@@ -2282,7 +2357,8 @@ function clearImageAsset(key) {
         if (input) input.value = '';
     }
     
-    
+    if (key === 'tBg') urlInputId = 'tBgUrl';
+    else if (key === 'tBgRecv') urlInputId = 'tBgRecvUrl';
     
     
     if (key.startsWith('t')) {
@@ -2588,57 +2664,55 @@ function syncBubbleStyle() {
 }
 
 // 3. 核心生成逻辑 (最终修复版)
+// 3. 核心生成逻辑 (支持双背景、透明度、精简代码)
 function updateTransferCSS() {
-    // 1. 获取值的辅助函数
     const v = (id) => { 
         const el = document.getElementById(id); 
-        if (!el) return (id.includes('Width') ? 230 : 0); 
+        if (!el) return 0; 
         return (el.type==='checkbox'?el.checked:el.value); 
     };
 
-    /* ★★★★★ 这里是修复的关键：控制菜单显示/隐藏 ★★★★★ */
-    // 如果找到了开关和菜单，就根据开关状态切换显示
-    if (document.getElementById('tContentSwitch') && document.getElementById('tContentControls')) {
-        const isChecked = document.getElementById('tContentSwitch').checked;
-        document.getElementById('tContentControls').style.display = isChecked ? 'block' : 'none';
+    // UI控制显隐
+    if (document.getElementById('tContentSwitch')) {
+        document.getElementById('tContentControls').style.display = v('tContentSwitch') ? 'block' : 'none';
     }
-    
-    // 更新数值显示
-    ['tWidth','tHeight','tRadius','tDecoSize','tDecoRot'].forEach(id => {
-        if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id) + (id.includes('Rot')?'°':'');
-    });
-    
-    // 0. 基础数值显示
-    ['tWidth','tHeight','tRadius','tDecoSize','tDecoRot'].forEach(id => {
-        if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id) + (id.includes('Rot')?'°':'');
-    });
-
-    // 1. 面板显隐
     document.getElementById('tGradControls').style.display = v('tGradSwitch') ? 'block' : 'none';
     document.getElementById('tDecoControls').style.display = v('tDecoSwitch') ? 'block' : 'none';
+    document.getElementById('tShadowControls').style.display = v('tShadowSwitch') ? 'block' : 'none';
+    
+    // 双背景控制显隐
+    const isDual = v('tDualBgSwitch');
+    document.getElementById('tBgRecvArea').style.display = isDual ? 'block' : 'none';
+    document.getElementById('tBgLabel').innerText = isDual ? '发送方 (Sent) 图片' : '背景图片';
+
+    // 默认形状控制显隐
     const isDefaultShape = v('tShape') === 'default';
     document.getElementById('tRadiusControl').style.display = isDefaultShape ? 'block' : 'none';
     document.getElementById('tSizeControls').style.display = isDefaultShape ? 'grid' : 'none';
 
-    // 2. 背景生成
-    let bgLayers = [];
-    if (v('tGradSwitch')) {
-        const gc1 = hexToRgba(v('tGc1'), v('tGradOp'));
-        const gc2 = hexToRgba(v('tGc2'), v('tGradOp'));
-        bgLayers.push(`linear-gradient(${v('tGradAng') || 135}deg, ${gc1}, ${gc2})`);
-    }
-    let mainImg = assets.tBg !== 'none' ? assets.tBg : (v('tBgUrl') ? `url('${v('tBgUrl')}')` : 'none');
-    if (mainImg !== 'none') bgLayers.push(mainImg);
-    if (bgLayers.length === 0) bgLayers.push('linear-gradient(135deg, #fa9d3b, #f57f20)'); 
+    // 更新数值显示
+    ['tWidth','tHeight','tRadius','tDecoSize','tDecoRot','tBgOp','tsX','tsY','tsB'].forEach(id => {
+        if(document.getElementById('val-'+id)) document.getElementById('val-'+id).innerText = v(id) + (id.includes('Rot')?'°':'');
+    });
 
-    // 3. 形状与尺寸
+    // 1. 基础样式（渐变 + 形状）
+    let bgGradient = '';
+    if (v('tGradSwitch')) {
+        const gc1 = document.getElementById('tGc1').value; // 渐变无需透明度转换，由底色决定
+        const gc2 = document.getElementById('tGc2').value;
+        bgGradient = `linear-gradient(${v('tGradAng') || 135}deg, ${gc1}, ${gc2})`;
+    } else {
+        // 默认橙色底
+        bgGradient = 'linear-gradient(135deg, #fa9d3b, #f57f20)'; 
+    }
+
+    // 形状 CSS
     let shapeCSS = '';
     let childTrans = '';
-    const w = v('tWidth') + 'px';
-    const h = v('tHeight') + 'px';
-
     if (v('tShape') === 'default') {
-        shapeCSS = `width: ${w} !important; height: ${h} !important; border-radius: ${v('tRadius')}px !important;`;
+        shapeCSS += vOpt('width', v('tWidth')+'px', '200px');
+        shapeCSS += vOpt('height', v('tHeight')+'px', '100px');
+        shapeCSS += vOpt('border-radius', v('tRadius')+'px', '12px');
     } else if (v('tShape') === 'circle') {
         shapeCSS = `width: 180px !important; height: 180px !important; border-radius: 50% !important; aspect-ratio: 1/1 !important;`;
     } else if (v('tShape') === 'diamond') {
@@ -2646,107 +2720,161 @@ function updateTransferCSS() {
         childTrans = `transform: rotate(-45deg) !important;`;
     }
 
-    // 4. 对齐逻辑 (关键修复点)
-    const alignKey = v('tAlign') || 'flex-start';
-    let textAlign = 'left';
-    if(alignKey === 'center') textAlign = 'center';
-    if(alignKey === 'flex-end') textAlign = 'right';
+    // 2. 背景图片 (使用 ::after 实现透明度)
+    // 逻辑：.transfer-card::after 负责放图片
+    // 如果区分收发，则在 .sent 和 .received 下分别覆盖 background-image
+    
+    let sentImg = assets.tBg !== 'none' ? assets.tBg : (v('tBgUrl') ? `url('${v('tBgUrl')}')` : 'none');
+    let recvImg = assets.tBgRecv !== 'none' ? assets.tBgRecv : (v('tBgRecvUrl') ? `url('${v('tBgRecvUrl')}')` : 'none');
+    
+    // 如果不区分，接收方也用发送方的图
+    if (!isDual) recvImg = sentImg;
 
-    // 5. 装饰纹理 (::before)
+    const bgOp = v('tBgOp');
+    const bgSize = v('tBgSize');
+    
+    // 生成 ::after 的 CSS (用于背景图)
+    // 只有当有图片时才生成复杂代码
+    let afterCSS = '';
+    // [替换目标：updateTransferCSS 函数中生成 afterCSS 的 if 块]
+    if (sentImg !== 'none' || recvImg !== 'none') {
+        // 公共部分
+        afterCSS += `
+    .transfer-card::after, .transfer-card-demo::after {
+        content: '' !important;
+        position: absolute !important;
+        inset: 0 !important;
+        z-index: 0 !important; /* 背景图在最底层 */
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: ${bgSize} !important;
+        opacity: ${bgOp} !important;
+        border-radius: inherit !important; /* 继承父级圆角 */
+        overflow: hidden !important;       /* 剪裁溢出 */
+        pointer-events: none !important;
+        background-image: ${sentImg} !important; 
+    }`;
+
+        // 如果区分收发，额外生成接收方 CSS
+        if (isDual && recvImg !== 'none') {
+            afterCSS += `
+    .message-container.received .transfer-card::after {
+        background-image: ${recvImg} !important;
+    }`;
+        }
+    }
+   // [SEARCH THIS BLOCK TO REPLACE]
+   // [替换目标：JS 中生成 decoCSS 的部分]
+    // 3. 装饰纹理 (使用 ::before)
     let decoCSS = '';
     if (v('tDecoSwitch')) {
         let dUrl = assets.tDeco !== 'none' ? assets.tDeco : (v('tDecoUrl') ? `url('${v('tDecoUrl')}')` : 'none');
         if (dUrl !== 'none') {
             const scale = v('tDecoSize') / 100; 
-            const dX = v('tDecoX');
-            const dY = v('tDecoY');
             const dRot = v('tDecoRot');
             
             decoCSS = `
-            .transfer-card-demo::before, .transfer-card::before {
-                content: '' !important; 
-                position: absolute !important; 
-                inset: -200px !important;
-                background-image: ${dUrl} !important; 
-                background-size: contain !important; 
-                background-repeat: no-repeat !important; 
-                background-position: center !important;
-                z-index: 0 !important; 
-                pointer-events: none !important;
-                transform: translate(${dX}px, ${dY}px) rotate(${dRot}deg) scale(${scale}) !important;
-            }
-            `;
+    .transfer-card-demo::before, .transfer-card::before {
+        content: '' !important; 
+        position: absolute !important; 
+        
+        inset: -200px !important;
+        background-image: ${dUrl} !important; 
+        background-size: contain !important; 
+        background-repeat: no-repeat !important; 
+        background-position: center !important;
+        
+        
+        opacity: ${v('tDecoOp')} !important; 
+        
+        z-index: 1 !important; 
+        pointer-events: none !important;
+        transform: translate(${v('tDecoX')}px, ${v('tDecoY')}px) rotate(${dRot}deg) scale(${scale}) !important;
+    }`;
         }
     }
 
+    // 4. 文字阴影
+    let textShadowCSS = '';
+    if (v('tShadowSwitch')) {
+        const tsColor = document.getElementById('tShadowColor').value;
+        const tsVal = `${v('tsX')}px ${v('tsY')}px ${v('tsB')}px ${tsColor}`;
+        textShadowCSS = `text-shadow: ${tsVal} !important;`;
+    }
+
+    // 5. 对齐与间距 (使用 vOpt 精简默认值)
+    const alignKey = v('tAlign') || 'flex-start';
+    let textAlign = 'left';
+    if(alignKey === 'center') textAlign = 'center';
+    if(alignKey === 'flex-end') textAlign = 'right';
+
     // 6. 标题替换
-    const color = v('tTextColor');
     let titleCSS = '';
     let iconDisplay = 'inline-flex';
     if (v('tContentSwitch')) {
         iconDisplay = 'none';
         const tText = v('tTitleText').replace(/"/g, '\\"');
         titleCSS = `
-        .transfer-title::after, #tDemoTitle::after {
-            content: "${tText}" !important;
-            display: block !important;
-            font-size: ${v('tTitleSize')}px !important;
-        }
-        .transfer-title, #tDemoTitle { font-size: 0 !important; }
-        `;
+    .transfer-title::after, #tDemoTitle::after {
+        content: "${tText}" !important;
+        display: block !important;
+        font-size: ${v('tTitleSize')}px !important;
+    }
+    .transfer-title, #tDemoTitle { font-size: 0 !important; }`;
     }
 
-    // 7. 生成 CSS (注意 align-items: stretch)
+    // [替换目标：updateTransferCSS 函数中生成 const css 的部分]
+    // 7. 组装 CSS
     const css = `
     .transfer-card, .transfer-card-demo {
-        background-image: ${bgLayers.join(', ')} !important;
-        background-size: ${v('tBgSize')} !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-        
+        background: ${bgGradient} !important; 
         display: flex; 
         flex-direction: column !important;
         justify-content: center !important; 
-        align-items: stretch !important; /* 关键：让子元素占满宽度 */
-        
-        padding: ${v('tPad')}px !important;
+        align-items: stretch !important;
         position: relative !important;
         box-sizing: border-box !important;
+        
+        /* 允许子元素(贴图)溢出 */
+        overflow: visible !important; 
+        
+        ${vOpt('padding', v('tPad')+'px', '15px')}
         ${shapeCSS}
-        overflow: visible !important;
+    }
+    
+    .transfer-card::after, .transfer-card-demo::after {
+        border-radius: inherit !important; 
     }
     
     .transfer-card *, .transfer-card-demo * {
-        color: ${color} !important;
-        border-color: ${color} !important;
+        color: ${v('tTextColor')} !important;
+        border-color: ${v('tTextColor')} !important;
         position: relative !important; 
-        z-index: 1 !important;
+        z-index: 2 !important; 
         ${childTrans}
+        ${textShadowCSS}
     }
 
-    /* 标题行 (Flex容器) */
     .transfer-title, #tDemoTitle { 
         display: flex !important;
         width: 100% !important;
-        justify-content: ${alignKey} !important; /* 图标文字对齐 */
+        justify-content: ${alignKey} !important;
         align-items: center !important;
-        margin-bottom: ${v('tGap1')}px !important;
+        ${vOpt('margin-bottom', v('tGap1')+'px', '10px')}
     }
     
-    /* 金额行 (块级元素) */
     .transfer-amount { 
         font-size: 24px !important; 
         font-weight: bold !important; 
-        text-align: ${textAlign} !important; /* 文字对齐 */
-        margin-bottom: ${v('tGap2')}px !important;
+        text-align: ${textAlign} !important;
         margin-top: 0 !important;
+        ${vOpt('margin-bottom', v('tGap2')+'px', '10px')}
     }
     
-    /* 备注行 (块级元素) */
     .transfer-note { 
         font-size: 12px !important; 
         opacity: 0.9 !important; 
-        text-align: ${textAlign} !important; /* 文字对齐 */
+        text-align: ${textAlign} !important;
     }
 
     .transfer-status { display: none !important; }
@@ -2754,15 +2882,14 @@ function updateTransferCSS() {
     .t-icon-bg {
         display: ${iconDisplay} !important; 
         width: 20px; height: 20px; 
-        
         align-items: center; justify-content: center;
         margin-right: 6px; flex-shrink: 0;
     }
     
+    ${afterCSS}
     ${titleCSS}
     ${decoCSS}
     `;
-    
     document.getElementById('dynamic-transfer-css').innerHTML = css;
     
     // 实时同步到模拟区
@@ -2772,6 +2899,7 @@ function updateTransferCSS() {
     });
 
     saveState();
+    // 触发主预览更新(为了同步导出代码框)
     if(document.getElementById('tab5').classList.contains('active')) update();
 }
 
@@ -3300,44 +3428,46 @@ s.display = "flex";
     if (sel === 'received') selector = ".message-container.received .message-bubble";
 
     // ★★★ 生成 CSS 字符串 (动态插入注释) ★★★
-      let css = `${selector} {${cm('基础定位与防错位')}
+        let css = `/* ▸◂┄▸◂┄代码由鲷鱼烧气泡生成器辅助生成┄▸◂┄▸◂ */\n\n`;
+    
+    // 2. 气泡本体 CSS (使用 vOpt 精简)
+    css += `${selector} {${cm('基础定位与防错位')}
   position: relative !important;
   overflow: visible !important;
   box-sizing: border-box !important;
-  padding: ${v('pt')}px ${v('pr')}px ${v('pb')}px ${v('pl')}px !important;
+  ${vOpt('padding', `${v('pt')}px ${v('pr')}px ${v('pb')}px ${v('pl')}px`, '10px 12px 10px 12px')}
   border-radius: ${radiusVal} !important;
   
   ${cm('文字对齐设置')}
   display: flex !important;
   flex-direction: column !important;
-  justify-content: ${alignV} !important; /* 垂直对齐 */
-  text-align: ${alignH} !important;      /* 水平对齐 */
+  justify-content: ${alignV} !important;
+  text-align: ${alignH} !important;
 
   ${cm('尺寸限制')}
-  max-width: ${v('maxWidth')}% !important;
-  min-width: ${v('minWidth')}px !important;
-  min-height: ${v('minHeight')}px !important;
+  ${vOpt('max-width', v('maxWidth')+'%', '80')}
+  ${vOpt('min-width', v('minWidth')+'px', '20')}
+  ${vOpt('min-height', v('minHeight')+'px', '20')}
 
-  ${cm('清除底色')}
+  ${cm('背景与外观')}
   background-color: transparent !important;
-  ${cm('背景层 (含装饰+底纹)')}
   background-image: ${bgImageVal} !important;
   background-position: ${bgPosVal} !important;
   background-size: ${bgSizeVal} !important;
   background-repeat: ${bgRepVal} !important;
-  background-clip: ${bgClipVal} !important;
-  background-blend-mode: ${bgBlendMode} !important;
-  ${cm('阴影与质感')}
+  ${vOpt('background-blend-mode', bgBlendMode, 'normal')}
+  
   box-shadow: ${bubbleBoxShadow} !important;
   color: ${textColor} !important;
-  backdrop-filter: blur(${v('blur')}px) !important;
-  -webkit-backdrop-filter: blur(${v('blur')}px) !important;
+  ${vOpt('backdrop-filter', `blur(${v('blur')}px)`, 'blur(0px)')}
+  ${vOpt('-webkit-backdrop-filter', `blur(${v('blur')}px)`, 'blur(0px)')}
   
   line-height: 1.55 !important;
   letter-spacing: 0.02em !important;
   word-break: break-word !important;
   z-index: 10 !important;
 `;
+
 
     if (isGb) {
         css += `  border: ${borderVal} !important;\n  outline: none !important;\n}`;
@@ -3408,10 +3538,16 @@ ${selector}::${pseudo} {
     if (!isGb && hasSticker2 && assets.sticker2) css += genStickerCSS(2, 'before');
     
      // ★★★ 核心修改：根据开关决定是否导出转账代码 ★★★
+   // ★★★ 核心修改：根据开关决定是否导出转账代码 ★★★
     if (incTrans) {
         const tCss = document.getElementById('dynamic-transfer-css').innerHTML;
         if (tCss) {
             css += `\n\n${cm('-------- 转账卡片美化 --------')}` + tCss
+                
+                .replace(/, \.transfer-card-demo::after/g, '') 
+                .replace(/, \.transfer-card-demo::before/g, '') 
+                
+                
                 .replace(/, \.transfer-card-demo \*/g, '') 
                 .replace(/, \.transfer-card-demo/g, '')    
                 .replace(/, #tDemoTitle::after/g, '')       
