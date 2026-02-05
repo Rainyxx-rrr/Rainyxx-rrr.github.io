@@ -659,7 +659,39 @@ body.preview-collapsed .float-btn {
     }
 }
 /* === 修正版 END === */
+/* --- 移动端防误触/防滑走终极补丁 START --- */
 
+/* 1. 全局锁死：禁止浏览器的“橡皮筋”回弹效果和手势导航 */
+html, body {
+    overscroll-behavior: none; /* 关键：禁止拉动到边缘时的回弹和导航 */
+    overscroll-behavior-y: none;
+    touch-action: pan-y; /* 关键：只允许垂直滚动，禁止水平滑动（即禁止左滑返回） */
+}
+
+/* 2. 针对滚动区域的特别设置 */
+/* 允许内部内容正常滚动，但滑到底部时不会触发整个页面的回弹 */
+.tab-content, .sidebar-content, .preview-stage {
+    overscroll-behavior: contain; 
+    -webkit-overflow-scrolling: touch; /* 保持 iOS 滚动的流畅惯性 */
+}
+
+/* 3. 针对滑块 (Range Input) 的“绝对控制” */
+/* 当手指按在滑块上时，禁止浏览器处理任何屏幕滚动/缩放，完全把控制权交给滑块 */
+input[type="range"] {
+    touch-action: none !important; 
+}
+
+/* 4. 针对取色器和画布 */
+input[type="color"], .grad-pad, .preview-area {
+    touch-action: none !important; /* 禁止在这些区域引发页面滚动 */
+}
+
+/* 5. 针对自定义微调按钮 */
+.step-btn, .color-wrapper, .tab-btn, .toolbar-btn {
+    touch-action: manipulation; /* 优化点击响应，禁用双击缩放 */
+}
+
+/* --- 移动端防误触/防滑走终极补丁 END --- */
     </style>
     <!-- Dynamic CSS Injection for Transfer Preview -->
     <style id="dynamic-transfer-css"></style>
