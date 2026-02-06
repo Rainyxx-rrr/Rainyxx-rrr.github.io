@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rainy eve Bubble - v13.1 TransferPro (Fixed)</title>
     <style>
+.t-icon-bg {
+    display: inline-flex;
+    width: 20px; height: 20px;
+    align-items: center; justify-content: center;
+    margin-right: 6px;
+    font-style: normal;
+}
         :root { 
             --bg-body: #f4f6f9; 
             --bg-panel: #ffffff; 
@@ -525,7 +532,7 @@
     }
 
     .sidebar-content {
-        flex: 1; overflow-y: auto; padding: 15px;
+        flex: 1; overflow-y: auto; padding: 15px;padding-bottom: 80px;
     }
 
     /* 侧边栏按钮样式 */
@@ -691,7 +698,277 @@ input[type="color"], .grad-pad, .preview-area {
     touch-action: manipulation; /* 优化点击响应，禁用双击缩放 */
 }
 
+
+
 /* --- 移动端防误触/防滑走终极补丁 END --- */
+
+
+/* --- V4 混合存档列表样式 --- */
+.saved-item-v4 {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 0;
+    position: relative;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+.saved-item-v4:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-color: #ddd;
+}
+
+/* 名字和日期 */
+.saved-name-v4 { font-size: 15px; font-weight: 700; color: #333; }
+.saved-date-v4 { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+/* === 类型A: 通用存档 (大卡片) === */
+.saved-item-v4.universal {
+    border-left: 4px solid #333; /* 黑色左标示通用 */
+}
+.saved-main-click {
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 12px;
+}
+.saved-icon {
+    width: 32px; height: 32px;
+    background: #f5f5f7; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #666; font-size: 14px;
+}
+.load-tag {
+    font-size: 12px; font-weight: 600; color: #333;
+    background: #eee; padding: 4px 10px; border-radius: 20px;
+}
+
+/* === 类型B: 组合存档 (分体式) === */
+.saved-item-v4.dual {
+    padding: 12px 15px;
+    border-left: 4px solid #0066CC; /* 蓝色左标示组合 */
+}
+.saved-header-v4 {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px; cursor: pointer;
+}
+.saved-slots-v4 { display: flex; gap: 8px; }
+.slot-v4 {
+    flex: 1; padding: 8px; border-radius: 6px; font-size: 12px;
+    text-align: center; cursor: pointer; font-weight: 500;
+    transition: 0.1s;
+}
+.slot-v4.filled.sent { background: #e6f0ff; color: #0066CC; border: 1px solid #b3d4ff; }
+.slot-v4.filled.sent:hover { background: #0066CC; color: #fff; }
+
+.slot-v4.filled.recv { background: #fff0f6; color: #e91e63; border: 1px solid #ffadd2; }
+.slot-v4.filled.recv:hover { background: #e91e63; color: #fff; }
+
+.slot-v4.empty { background: #f9f9fa; border: 1px dashed #ddd; color: #ccc; }
+.slot-v4.empty:hover { border-color: #bbb; color: #999; }
+
+/* 删除按钮 */
+.del-icon-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: none; border: none; color: #ddd; font-size: 18px;
+    padding: 0 5px; cursor: pointer;
+}
+.del-icon-btn:hover { color: #ff4d4f; }
+
+/* === 手机端强制分行布局 (修复版) === */
+@media screen and (max-width: 768px) {
+    
+    /* 1. 针对【普通边框、内发光、外阴影】的布局修复 */
+    /* 只要包含两个分开的块，就强制变为上下排列 */
+    .control-group .color-row {
+        display: flex !important;
+        flex-direction: column !important; /* 强制上下排布 */
+        gap: 10px !important;
+        margin-bottom: 15px;
+    }
+
+    /* 让行内的每个块都占满 100% 宽度 */
+    .control-group .color-row > div {
+        width: 100% !important;
+        flex: none !important; /* 忽略 HTML 里的 flex:3 */
+        padding-left: 0 !important;
+    }
+
+    /* 优化颜色输入框的显示 */
+    .color-wrapper {
+        display: flex !important;
+        width: 100% !important;
+        justify-content: space-between;
+    }
+    .hex-input {
+        flex-grow: 1; /* 让输入框自动填满剩余空间 */
+        margin-left: 10px;
+        text-align: center;
+    }
+
+    /* 2. 针对【流光边框 (Gradient)】的特殊修复 */
+    /* 因为流光边框的滑块和颜色是在同一个 div 里的，所以逻辑不同 */
+    #gradBorderControls .color-wrapper {
+        display: flex !important;
+        flex-wrap: wrap !important; /* 允许换行 */
+        align-items: center;
+    }
+
+    /* 强制流光边框里的透明度滑块换行并占满 100% */
+    #gradBorderControls .mini-alpha {
+        order: 3; /* 保证它排在最后 */
+        flex-basis: 100% !important; /* 强制占满一行 */
+        width: 100% !important;
+        margin-top: 10px !important; /* 增加一点顶部间距 */
+        margin-left: 0 !important;
+    }
+}
+/* --- 新增：存档导出按钮样式 --- *//* === 移动端优化：卡片式存档列表 === */
+
+/* 存档卡片容器 */
+.saved-item-v4 {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+    /* 取消之前的 display:flex，改为默认 block */
+    display: block; 
+}
+
+/* 内部内边距容器 */
+.saved-inner-pad {
+    padding: 15px;
+}
+
+/* 1. 顶部：信息行 (标题 + 日期 + 删除按钮) */
+.saved-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px; /* 与下方按钮拉开距离 */
+}
+
+.saved-info-box {
+    flex: 1; /* 占据剩余空间 */
+    margin-right: 10px; /* 防止文字贴到删除按钮 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 静态删除按钮 (不再悬浮) */
+.del-btn-static {
+    width: 28px;
+    height: 28px;
+    background: #f5f5f7;
+    color: #999;
+    border: none;
+    border-radius: 50%;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0; /* 防止被挤扁 */
+}
+.del-btn-static:active {
+    background: #ff4d4f;
+    color: #fff;
+}
+
+/* 2. 底部：操作按钮行 (通用存档) */
+.saved-action-row {
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 12px;
+}
+
+/* 大按钮样式 */
+.act-btn-big {
+    flex: 1; /* 平分宽度 */
+    padding: 10px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* 加载按钮 (主色) */
+.act-btn-big.load {
+    background: #f0f7ff;
+    color: #0066CC;
+    border-color: #d6e4ff;
+}
+.act-btn-big.load:active {
+    background: #0066CC;
+    color: #fff;
+}
+
+/* 复制按钮 (次色) */
+.act-btn-big.copy {
+    background: #fff;
+    color: #555;
+    border-color: #eee;
+}
+.act-btn-big.copy:active {
+    background: #f5f5f5;
+    border-color: #ddd;
+}
+
+/* === 组合存档的槽位微调 === */
+.saved-slots-v4 {
+    display: flex;
+    gap: 10px;
+}
+.slot-v4 {
+    height: 44px; /* 增加高度，方便点击 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+}
+
+/* 组合存档里的小复制按钮优化 */
+.mini-copy-btn {
+    width: 28px; 
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    background: rgba(255,255,255,0.8);
+    margin-left: 8px;
+    color: #333;
+    font-size: 12px;
+}
+.mini-copy-btn:active {
+    background: #333;
+    color: #fff;
+}
+
+/* === 🚫 禁用所有文件上传按钮 === */
+input[type="file"] {
+    display: none !important;
+}
+
+/* 如果你想保留“上传背景”那个自定义按钮但让它失效，可以用下面这个，
+   或者是把文字提示改一下 */
+.label-text::after {
+    /* 可选：在所有“上传或输入URL”后面加个提示 */
+    /* content: " (仅限URL)"; */ 
+    font-size: 10px;
+    color: #999;
+}
+
     </style>
     <!-- Dynamic CSS Injection for Transfer Preview -->
     <style id="dynamic-transfer-css"></style>
@@ -732,6 +1009,9 @@ input[type="color"], .grad-pad, .preview-area {
         <button class="side-item" onclick="mobileSwitch(4, '对话模拟')">模拟预览</button>
         <button class="side-item" onclick="mobileSwitch(5, '导出代码')">导出 CSS</button>
         <button class="side-item" onclick="mobileSwitch(8, '导入配置')">导入配置</button>
+<!-- 在侧边菜单抽屉 sidebar-content 里 -->
+<button class="side-item" onclick="mobileSwitch(10, '我的存档')">我的存档</button>
+
         
         <div class="divider"></div>
         <button class="side-item danger" onclick="resetMemory(); toggleSidebar()">⚠️ 重置所有设置</button>
@@ -753,6 +1033,7 @@ input[type="color"], .grad-pad, .preview-area {
                 <button class="tab-btn" onclick="switchTab(4)">模拟</button>
                 <button class="tab-btn" onclick="switchTab(5)">导出</button>
 <button class="tab-btn" onclick="switchTab(8)">导入</button>
+<button class="tab-btn" onclick="switchTab(10)">存档</button>
             </div>
 <!-- 在 <div class="tab-header"> 内部，<button class="reset-btn"...> 之前添加 -->
 <div class="history-controls">
@@ -1657,51 +1938,100 @@ input[type="color"], .grad-pad, .preview-area {
         </div>
 
         <!-- Tab 5: 导出 -->
-        <div class="tab-content" id="tab5">
- <div class="control-group">
-        <div class="label-row"><span class="label-text">导出内容设置</span></div>
+        <!-- Tab 5: 导出 (整合版) -->
+<div class="tab-content" id="tab5">
+    
+    <!-- 基础选项区 -->
+    <div class="control-group">
+        <div class="label-row"><span class="label-text">导出选项配置</span></div>
         <div style="display:flex; flex-wrap:wrap; gap:15px; margin-bottom:10px;">
             <label style="font-size:12px; display:flex; align-items:center; cursor:pointer;">
                 <input type="checkbox" id="optTrans" class="save-state" checked onchange="update()"> 包含转账样式
             </label>
-<label style="font-size:12px; display:flex; align-items:center; cursor:pointer;">
-    <input type="checkbox" id="optAvatar" class="save-state" checked onchange="update()"> 包含头像设置
-</label>
+            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer;">
+                <input type="checkbox" id="optAvatar" class="save-state" checked onchange="update()"> 包含头像设置
+            </label>
+            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer;">
                 <input type="checkbox" id="optComm" class="save-state" checked onchange="update()"> 包含代码注释
             </label>
-            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer; color:#666;" title="推荐单独导出，若后期想重新修改可以一键还原。">
-                <input type="checkbox" id="optData" class="save-state"  onchange="update()"> 包含恢复数据(⚠️⚠️复制在eve的时候不用这个，只是自己保存调整气泡用）
+            <label style="font-size:12px; display:flex; align-items:center; cursor:pointer; color:#666;" title="推荐单独导出">
+                <input type="checkbox" id="optData" class="save-state" onchange="update()"> 包含恢复数据
             </label>
         </div>
-    </div>
-            <div class="control-group">
-                <div class="label-row"><span class="label-text">选择选择器</span></div>
-                <select id="selectorType" onchange="update()">
-                    <option value="all">所有气泡 (.message-bubble)</option>
-                    <option value="sent">用户发送 (.message-container.sent ...)</option>
-                    <option value="received">对方接收 (.message-container.received ...)</option>
-                </select>
+        
+        <!-- 链接修复面板 (保留原功能) -->
+        <div id="urlFixPanel" style="background:#fff8e6; border:1px solid #ffeeba; padding:12px; border-radius:8px; margin-top:10px; display:none;">
+            <div class="label-row" style="border-bottom:1px solid #e6dbb9; padding-bottom:5px; margin-bottom:10px;">
+                <span class="label-text" style="color:#856404;">🔗 图片链接修复</span>
             </div>
-
-
-            <!-- 新增：图片链接修复面板 -->
-            <div class="control-group" id="urlFixPanel" style="background:#fff8e6; border:1px solid #ffeeba; padding:12px; border-radius:8px; margin-bottom:15px; display:none;">
-                <div class="label-row" style="border-bottom:1px solid #e6dbb9; padding-bottom:5px; margin-bottom:10px;">
-                    <span class="label-text" style="color:#856404;">🔗 图片链接修复 (Image Fix)</span>
-                </div>
-                <div style="font-size:11px; color:#856404; margin-bottom:10px;">
-                    在此处修改链接会自动同步到所有设置。修改后可放心返回调整位置，链接不会失效。
-                </div>
-                <div id="urlFixList" style="display:flex; flex-direction:column; gap:8px;"></div>
-            </div>
-
-           <div style="display: flex; gap: 10px; margin-bottom: 0;">
-        <button class="copy-btn-main" id="exportBtn" onclick="copyCSS()" style="flex: 2;">一键复制 CSS 代码</button>
-        <!-- 新增的按钮，用紫色区分 -->
-        <button class="copy-btn-main" id="exportRainyBtn" onclick="copyRainyCode()" style="flex: 1; background: #6c5ce7;">仅复制配置数据</button>
-    </div>
-            <div class="code-box" id="codeOut"></div>
+            <div id="urlFixList" style="display:flex; flex-direction:column; gap:8px;"></div>
         </div>
+    </div>
+
+    <!-- 模式 A：单样式直接导出 -->
+    <div class="control-group" style="border:1px solid #eee; background:#fff; padding:15px; border-radius:12px;">
+        <div class="label-row">
+            <span class="label-text" style="font-size:14px; font-weight:700;">模式 A：直接导出 (当前样式)</span>
+            <span style="font-size:10px; color:#999; border:1px solid #eee; padding:2px 6px; border-radius:4px;">通用 / 单向</span>
+        </div>
+        <div style="font-size:11px; color:#666; margin-bottom:10px;">
+            所见即所得。适用于左右气泡样式一致，或者你只想导出其中一方的情况。
+        </div>
+
+        <div class="label-row"><span class="label-text">作用范围 (Selector)</span></div>
+        <select id="selectorType" onchange="update()" style="margin-bottom:10px;">
+            <option value="all">所有气泡 (.message-bubble)</option>
+            <option value="sent">仅 发送方 (.sent ...)</option>
+            <option value="received">仅 接收方 (.received ...)</option>
+        </select>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="copy-btn-main" id="exportBtn" onclick="copyCSS()" style="flex: 2;">📋 复制 CSS 代码</button>
+            <button class="copy-btn-main" id="exportRainyBtn" onclick="copyRainyCode()" style="flex: 1; background: #6c5ce7;">仅复制配置数据</button>
+        </div>
+    </div>
+
+    <!-- 模式 B：双向合并导出 -->
+    <div class="control-group" style="border:1px solid #d6e4ff; background:#f0f7ff; padding:15px; border-radius:12px; position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0; right:0; background:#d6e4ff; color:#0066CC; font-size:10px; padding:4px 8px; border-radius:0 0 0 8px;">推荐</div>
+        
+        <div class="label-row">
+            <span class="label-text" style="font-size:14px; font-weight:700; color:#004085;">模式 B：双向合并导出 (自动去重)</span>
+        </div>
+        <div style="font-size:11px; color:#557799; margin-bottom:15px;">
+            适用于左右样式不同（如不同贴图、颜色）。<br>
+            <strong>步骤：</strong>分别调整好两边的样式并点击“暂存”，最后点击合并。系统会自动提取公共代码，减少体积。
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+            <!-- 左侧暂存 -->
+            <div id="slot-recv-box" style="background:#fff; border:1px dashed #ffadd2; border-radius:8px; padding:10px; text-align:center; transition:0.3s;">
+                <div style="font-size:12px; color:#e91e63; font-weight:600; margin-bottom:5px;">接收方 (左)</div>
+                <div id="status-recv" style="font-size:10px; color:#ccc; margin-bottom:8px;">[ 空 ]</div>
+                <button onclick="captureSource('received')" style="width:100%; padding:6px; font-size:11px; border:1px solid #ffadd2; color:#e91e63; background:#fff0f6; border-radius:6px; cursor:pointer;">
+                    📥 暂存当前样式
+                </button>
+            </div>
+
+            <!-- 右侧暂存 -->
+            <div id="slot-sent-box" style="background:#fff; border:1px dashed #b3d4ff; border-radius:8px; padding:10px; text-align:center; transition:0.3s;">
+                <div style="font-size:12px; color:#0066CC; font-weight:600; margin-bottom:5px;">发送方 (右)</div>
+                <div id="status-sent" style="font-size:10px; color:#ccc; margin-bottom:8px;">[ 空 ]</div>
+                <button onclick="captureSource('sent')" style="width:100%; padding:6px; font-size:11px; border:1px solid #b3d4ff; color:#0066CC; background:#e6f0ff; border-radius:6px; cursor:pointer;">
+                    📥 暂存当前样式
+                </button>
+            </div>
+        </div>
+
+       <!-- 找到这一行原本的按钮，替换为下面的代码 -->
+<button id="btn-merge-copy" class="copy-btn-main" onclick="mergeAndCleanCSS()" style="background:#004085; border:none; font-weight:700; font-size:14px;">
+    一键生成并复制 (Merge & Copy)
+</button>
+    </div>
+
+    <!-- 代码输出框 -->
+    <div class="code-box" id="codeOut" style="margin-top:10px;"></div>
+</div>
 <div class="tab-content" id="tab8">
     <div class="control-group">
         <h2>导入配置</h2>
@@ -1716,6 +2046,50 @@ input[type="color"], .grad-pad, .preview-area {
         <div style="display:flex; gap:10px; margin-top:15px;">
             <button class="copy-btn-main" onclick="parseAndImportCSS()" style="background:#34c759;">⚡ 解析并还原</button>
             <button class="role-btn" onclick="document.getElementById('importText').value=''" style="width:80px; text-align:center;">清空</button>
+        </div>
+    </div>
+</div>
+
+<div class="tab-content" id="tab10">
+    <div class="control-group">
+        <h2>我的气泡存档</h2>
+        <div class="warn-box" style="margin-bottom:15px;">
+            <strong>通用存档：</strong> 不分左右，保存当前编辑器里的一切设置。<br>
+            <strong>组合存档：</strong> 如果需要左右样式不同（例如贴图对称），可使用下方的分体保存。
+        </div>
+
+        <div class="label-row"><span class="label-text">1. 存档名称</span></div>
+        <input type="text" id="presetNameInput" placeholder="例如: 简约蓝..." 
+               style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:13px; margin-bottom:15px;">
+        
+        <!-- 主按钮：保存通用 -->
+        <button class="copy-btn-main" onclick="saveUserPreset('universal')" 
+                style="width:100%; margin-bottom:15px; background:#222; font-weight:700;">
+            💾 保存为通用预设 (推荐)
+        </button>
+
+        <!-- 次要按钮：存为组合 -->
+        <div style="background:#f5f7fa; padding:10px; border-radius:8px;">
+            <div class="label-row" style="margin-bottom:8px; color:#888; font-size:11px;">
+                高级：存为双向组合 (分体)
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="copy-btn-main" onclick="saveUserPreset('sent')" 
+                        style="flex:1; background:#fff; color:#0066CC; border:1px solid #b3d4ff; padding:8px; font-size:12px; margin:0;">
+                    存入发送(右)
+                </button>
+                <button class="copy-btn-main" onclick="saveUserPreset('received')" 
+                        style="flex:1; background:#fff; color:#e91e63; border:1px solid #ffadd2; padding:8px; font-size:12px; margin:0;">
+                    存入接收(左)
+                </button>
+            </div>
+        </div>
+
+        <div class="divider" style="height:1px; background:#eee; margin:20px 0;"></div>
+
+        <div class="label-row"><span class="label-text">存档列表</span></div>
+        <div id="userPresetList" style="display:flex; flex-direction:column; gap:12px; min-height:100px; padding-bottom:50px;">
+            <!-- JS 自动生成 -->
         </div>
     </div>
 </div>
@@ -2374,29 +2748,32 @@ function applyAvatarUrl(type) {
     }
 }
 function clearImageAsset(key) {
-    
     assets[key] = 'none';
     
-    let urlInputId = '';
-    if (key === 'bg') urlInputId = 'bgUrlInput';
-    else if (key === 'sticker1') urlInputId = 'sticker1UrlInput';
-    else if (key === 'sticker2') urlInputId = 'sticker2UrlInput';
-    else if (key === 'tBg') urlInputId = 'tBgUrl';
-    else if (key === 'tDeco') urlInputId = 'tDecoUrl';
+    // 定义 Key 与 Input ID 的映射关系
+    const map = {
+        'bg': 'bgUrlInput',
+        'sticker1': 'sticker1UrlInput',
+        'sticker2': 'sticker2UrlInput',
+        'tBg': 'tBgUrl',
+        'tBgRecv': 'tBgRecvUrl',
+        'tDeco': 'tDecoUrl',
+        'avatarSent': 'avSentUrl',
+        'avatarRecv': 'avRecvUrl'
+    };
+    
+    const urlInputId = map[key];
     
     if (urlInputId) {
         const input = document.getElementById(urlInputId);
         if (input) input.value = '';
     }
     
-    if (key === 'tBg') urlInputId = 'tBgUrl';
-    else if (key === 'tBgRecv') urlInputId = 'tBgRecvUrl';
-    
-    
+    // 刷新逻辑
     if (key.startsWith('t')) {
-        updateTransferCSS(); // 如果是转账相关的图片
+        updateTransferCSS(); 
     } else {
-        update(); // 普通气泡图片
+        update(); 
     }
 }
 
@@ -2455,39 +2832,103 @@ function saveState() {
     localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(state));
 }
 
+/* --- 增强版读取函数：完美恢复现场 --- */
 function loadState() {
     const saved = localStorage.getItem('eveBubbleState_Final_V13');
-    if (saved) {
+    if (!saved) return false;
+
+    try {
         const state = JSON.parse(saved);
+
+        // 1. 恢复普通控件 (Input, Checkbox, Color, Select)
         for (const key in state) {
             const el = document.getElementById(key);
-            if (el && key !== 'decorations') {
-                if (el.type === 'checkbox') el.checked = state[key];
-                else el.value = state[key];
+            // 排除特殊对象，只处理 DOM 元素
+            if (el && key !== 'decorations' && key !== 'assets' && key !== 'gradPos' && key !== 'currentTabId') {
+                if (el.type === 'checkbox') {
+                    el.checked = state[key];
+                } else {
+                    el.value = state[key];
+                }
+                // 如果是滑块，尝试更新它旁边的数字显示
+                if (el.type === 'range') {
+                    const label = document.getElementById('val-' + key);
+                    if (label) {
+                        label.innerText = state[key] + (key.includes('Rot') || key.includes('Angle') ? '°' : '');
+                    }
+                    // 触发 input 事件以更新可能存在的微调按钮
+                    el.dispatchEvent(new Event('input'));
+                }
             }
         }
-        if (state['gradPos']) {
-            gradState = state['gradPos'];
+
+        // 2. 恢复渐变球位置
+        if (state.gradPos) {
+            gradState = state.gradPos;
             const point = document.getElementById('gradPoint');
             const line = document.getElementById('gradLine');
-            point.style.left = gradState.x + '%';
-            point.style.top = gradState.y + '%';
-            line.style.transform = `rotate(${gradState.angle}deg)`;
+            if (point && line) {
+                point.style.left = gradState.x + '%';
+                point.style.top = gradState.y + '%';
+                line.style.transform = `rotate(${gradState.angle}deg)`;
+            }
         }
-        if (state['decorations']) {
-            decorations = state['decorations'];
-            decorations.forEach(d => { if(!d.posMode) d.posMode = 'percent'; });
+
+        // 3. 恢复装饰图层 (Tab 6)
+        if (state.decorations) {
+            decorations = state.decorations;
             renderDecorationList();
         }
-        updateLock();
-        togglePadLock(); 
-        if(document.getElementById('padLock').checked) {
-             updatePad('x'); updatePad('y');
+
+        // 4. 恢复图片资源 (关键修复：不仅恢复变量，还要填回 Input 框)
+        if (state.assets) {
+            assets = state.assets;
+            
+            // 定义资源 Key 和 Input ID 的映射关系
+            const map = {
+                'bg': 'bgUrlInput',
+                'sticker1': 'sticker1UrlInput',
+                'sticker2': 'sticker2UrlInput',
+                'tBg': 'tBgUrl',
+                'tBgRecv': 'tBgRecvUrl',
+                'tDeco': 'tDecoUrl',
+                'avatarSent': 'avSentUrl',
+                'avatarRecv': 'avRecvUrl'
+            };
+
+            for (const [assetKey, inputId] of Object.entries(map)) {
+                if (assets[assetKey] && assets[assetKey] !== 'none' && assets[assetKey].includes('http')) {
+                    const inputEl = document.getElementById(inputId);
+                    if (inputEl) {
+                        // 去掉 url('') 包装，只显示链接，方便用户查看
+                        inputEl.value = assets[assetKey].replace(/^url\(['"]?/, '').replace(/['"]?\)$/, '');
+                    }
+                }
+            }
         }
-syncUIState(); 
+
+        // 5. 恢复转账标题文字
+        if (state.tTitleText) {
+            const tTitleEl = document.getElementById('tTitleText');
+            if (tTitleEl) tTitleEl.value = state.tTitleText;
+        }
+        
+        // 6. 恢复上次停留的 Tab 页 (如果有)
+        if (state.currentTabId) {
+            // 稍后在 onload 里执行切换，防止冲突
+            window.restoredTabId = parseInt(state.currentTabId); 
+        }
+
+        // 7. 刷新 UI 状态 (显隐控制)
+        updateLock();       // 刷新圆角锁定状态
+        togglePadLock();    // 刷新边距锁定状态
+        syncUIState();      // 刷新转账/Tab栏状态
+        
         return true;
+    } catch (e) {
+        console.error("恢复存档失败:", e);
+        return false;
     }
-    return false;
 }
 
 function resetMemory() {
@@ -2531,22 +2972,30 @@ function copyRainyCode() {
         fallbackCopy(finalString);
     }
 
-    // 降级复制方案 (内部函数)
-    function fallbackCopy(txt) {
-        const textArea = document.createElement("textarea");
-        textArea.value = txt;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            showSuccess();
-        } catch (err) {
-            alert('复制失败，请手动复制');
+}
+
+ /* --- 全局降级复制函数 --- */
+function fallbackCopy(txt) {
+    const textArea = document.createElement("textarea");
+    textArea.value = txt;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        
+        // 修正点：这里改用全局的 showToast，因为 showSuccess 访问不到
+        if (typeof showToast === 'function') {
+            showToast('✅ 已复制到剪贴板 (兼容模式)');
+        } else {
+            alert('复制成功');
         }
-        document.body.removeChild(textArea);
+
+    } catch (err) {
+        alert('复制失败，请手动复制');
     }
+    document.body.removeChild(textArea);
 }
 
 function copyCSS() {
@@ -2930,7 +3379,8 @@ function updateTransferCSS() {
         if(el.innerHTML !== demoHTML) el.innerHTML = demoHTML;
     });
 
-    saveState();
+    
+debouncedSaveState();
     // 触发主预览更新(为了同步导出代码框)
     if(document.getElementById('tab5').classList.contains('active')) update();
 }
@@ -2989,7 +3439,18 @@ function syncUIState() {
 }
 
 /* ---------------- EXISTING UPDATE LOGIC ---------------- */
+let isUpdatePending = false;
+
 function update() {
+    if (isUpdatePending) return;
+    
+    isUpdatePending = true;
+    requestAnimationFrame(() => {
+        realUpdate(); // 调用真正的渲染逻辑
+        isUpdatePending = false;
+    });
+}
+function realUpdate() {
     const v = (id) => { const el = document.getElementById(id); return el ? el.value : 0; };
 
  const alignH = document.getElementById('textAlignH') ? document.getElementById('textAlignH').value : 'left';
@@ -3045,7 +3506,8 @@ const incAvatar = elAvatar ? elAvatar.checked : true;
              document.getElementById('val-'+id.replace('sticker2','s2')).innerText = v(id) + (id.includes('Rot')?'°':'');
     });
 
-    saveState();
+    
+debouncedSaveState();
 
     const count = parseInt(v('colorCount'));
     const colorIns = document.querySelectorAll('.color-wrapper'); 
@@ -3877,21 +4339,40 @@ function getCurrentStateObj() {
 // 目的：在保存到 localStorage 的同时，决定是否推入历史栈
 const originalSaveState = saveState; // 备份原函数（如果有引用的话）
 
+/* --- 增强版保存函数：增加保存当前 Tab --- */
 saveState = function() {
-    // A. 依然执行原有的 LocalStorage 保存逻辑
+    // 1. 获取所有配置数据
     const state = getCurrentStateObj();
+    
+    // 2. 额外保存：当前正在编辑哪个 Tab？(提升体验的关键)
+    // 找到 active 的 tab-content 的 ID (例如 "tab7")
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+        state.currentTabId = activeTab.id.replace('tab', ''); // 只存数字，例如 "7"
+    }
+
+    // 3. 写入本地存储
     localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(state));
 
-    // B. 历史记录逻辑
-    // 如果正在进行撤销/重做操作，不要记录新的历史，否则会覆盖未来
-    if (isHistoryNavigating) return;
-
-    // 防抖处理：如果是滑块拖动，不要频繁记录
-    clearTimeout(historyDebounceTimer);
-    historyDebounceTimer = setTimeout(() => {
-        pushToHistory(state);
-    }, 400); // 400ms 内没有新操作才算一次“定格”
+    // 4. 历史记录逻辑 (保留你原本的撤销重做逻辑)
+    if (typeof isHistoryNavigating !== 'undefined' && !isHistoryNavigating) {
+        clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = setTimeout(() => {
+            if(typeof pushToHistory === 'function') pushToHistory(state);
+        }, 400); 
+    }
 };
+
+// --- 性能优化：防抖保存 ---
+let saveTimer = null;
+function debouncedSaveState() {
+    if (saveTimer) clearTimeout(saveTimer);
+    // 延迟 800ms 再保存，避免拖动滑块时频繁写入硬盘
+    saveTimer = setTimeout(() => {
+        saveState(); 
+        // 可以在这里加个 console.log('Auto Saved'); 测试
+    }, 800);
+}
 
 // 3. 推入历史栈
 function pushToHistory(stateObj) {
@@ -4197,17 +4678,85 @@ function initMobileRangeSteppers() {
     });
 }
 // 页面加载完成后立即执行
-window.addEventListener('load', () => {
-    // 延迟一点点执行，确保原有样式已加载
-    setTimeout(initMobileRangeSteppers, 100);
+/* --- 页面初始化逻辑 (合并优化版) --- */
+// 页面关闭/刷新前强制保存，防止防抖导致的最后一次修改丢失
+window.addEventListener('beforeunload', () => {
+    // 强制立即执行原版 saveState，绕过防抖
+    if(typeof originalSaveState === 'function') originalSaveState(); 
+    else saveState();
 });
+
 window.addEventListener('load', () => {
+ 
+try {
+    const savedCache = localStorage.getItem('eveBubble_cleanerCache_v1');
+    if (savedCache) {
+        cleanerCache = JSON.parse(savedCache);
+        if (cleanerCache.received) updateMergeUI('received');
+        if (cleanerCache.sent) updateMergeUI('sent');
+    }
+} catch (e) {
+    console.error("暂存数据损坏，已重置", e);
+    localStorage.removeItem('eveBubble_cleanerCache_v1'); // 清除坏数据
+}
+
+    // 1. 初始化画布背景
     const savedCanvas = localStorage.getItem('eve_canvas_mode_final');
     if(savedCanvas) setCanvas(savedCanvas);
-    if (!loadState()) { applyPreset('classic'); } else { update(); updateTransferCSS(); }
-document.querySelectorAll('.sim-transfer-row').forEach(el => el.style.display = 'none');
-setTimeout(update, 100);
+
+    // 2. 尝试恢复数据 (需要配合刚才给你的新版 loadState 函数)
+    let restoreSuccess = loadState();
+
+    if (!restoreSuccess) { 
+        // 如果没有存档（第一次来），应用默认预设
+        applyPreset('classic'); 
+    } else {
+        // 3. 如果恢复成功，执行深度刷新
+        update();             
+        updateTransferCSS();  
+        
+        // 4. 跳转回上次退出的 Tab
+        // (window.restoredTabId 是在新版 loadState 里设置的)
+        if (typeof window.restoredTabId !== 'undefined') {
+            switchTab(window.restoredTabId);
+            
+            // 如果是手机端，同步顶部标题
+            const titles = ['外观设置','质感细节','蒙版底纹','贴图配置','对话模拟','导出代码','装饰图层','转账卡片','导入配置','头像设置'];
+            if(document.getElementById('mobileTitle')) {
+                document.getElementById('mobileTitle').innerText = titles[window.restoredTabId] || '外观设置';
+            }
+        }
+        
+        // 5. 提示用户已恢复
+        showToast('已自动恢复上次的编辑');
+    }
+
+    // 6. 初始化 UI 细节
+    // 隐藏模拟转账行 (防止显示错乱)
+    document.querySelectorAll('.sim-transfer-row').forEach(el => el.style.display = 'none');
+    
+    // 延迟初始化微调按钮 (确保 DOM 已经稳定)
+    setTimeout(initMobileRangeSteppers, 100);
+    
+    // 最后再次刷新一次，确保所有样式生效
+    setTimeout(update, 200);
 });
+
+// --- 配套的提示函数 (如果没有添加过，请务必加上) ---
+function showToast(msg) {
+    // 防止重复创建
+    if(document.querySelector('.eve-toast')) return;
+    
+    const div = document.createElement('div');
+    div.className = 'eve-toast';
+    div.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.75); color:#fff; padding:10px 20px; border-radius:30px; font-size:13px; font-weight:500; z-index:99999; pointer-events:none; transition:opacity 0.4s; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15);";
+    div.innerText = msg;
+    document.body.appendChild(div);
+    
+    // 2秒后淡出并删除
+    setTimeout(() => { div.style.opacity = '0'; }, 2000);
+    setTimeout(() => { div.remove(); }, 2500);
+}
 
 /* --- 侧边栏控制逻辑 --- */
 
@@ -4251,6 +4800,324 @@ function mobileSwitch(idx, title) {
     toggleSidebar();
 }
 
+/* ================= 混合存档系统 (Universal + Dual) ================= */
+
+// 1. 获取存档
+function getUserPresets() {
+    const data = localStorage.getItem('eve_user_presets_v4'); // 升级 v4
+    return data ? JSON.parse(data) : [];
+}
+
+// 2. 保存逻辑 (混合处理)
+function saveUserPreset(mode) {
+    const nameInput = document.getElementById('presetNameInput');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+        showToast('❌ 请输入存档名称');
+        nameInput.focus();
+        return;
+    }
+
+    const currentState = getCurrentStateObj();
+    const now = new Date().toLocaleString();
+    let presets = getUserPresets();
+    
+    // 检查重名
+    let idx = presets.findIndex(p => p.name === name);
+
+    if (idx !== -1) {
+        // === 已存在同名存档 ===
+        const target = presets[idx];
+        
+        // 如果旧的是“组合”，你想存为“通用”，会警告
+        if (target.type === 'dual' && mode === 'universal') {
+            if(!confirm(`【${name}】原本是一个双向组合存档。\n强制保存为【通用】将丢失原有的左右区分数据。\n确定覆盖吗？`)) return;
+            // 覆盖为通用
+            target.type = 'universal';
+            target.data = currentState;
+            target.sent = null; target.received = null; // 清理旧数据
+        }
+        // 如果旧的是“通用”，你想存为“组合”，会自动升级
+        else if (target.type === 'universal' && (mode === 'sent' || mode === 'received')) {
+            if(!confirm(`【${name}】原本是通用存档。\n确定要将其升级为【双向组合】吗？`)) return;
+            target.type = 'dual';
+            target.data = null; // 清理通用数据
+            target[mode] = currentState;
+        }
+        // 同类型更新
+        else {
+            if (mode === 'universal') {
+                target.data = currentState;
+            } else {
+                target[mode] = currentState;
+            }
+        }
+        
+        target.date = now;
+        // 移到顶端
+        presets.splice(idx, 1);
+        presets.unshift(target);
+        
+        showToast(`✅ 已更新存档：${name}`);
+
+    } else {
+        // === 新建存档 ===
+        const newPreset = {
+            id: Date.now(),
+            name: name,
+            date: now,
+            type: (mode === 'universal') ? 'universal' : 'dual',
+            // 通用模式用 data，组合模式用 sent/received
+            data: (mode === 'universal') ? currentState : null,
+            sent: (mode === 'sent') ? currentState : null,
+            received: (mode === 'received') ? currentState : null
+        };
+        presets.unshift(newPreset);
+        showToast(`✨ 新建${mode==='universal'?'通用':'组合'}存档：${name}`);
+    }
+
+    localStorage.setItem('eve_user_presets_v4', JSON.stringify(presets));
+    renderPresetList();
+}
+// ★★★ 新增：不覆盖当前画布的一键导出功能 ★★★
+function quickExportPreset(id, mode, e) {
+    if(e) e.stopPropagation(); // 防止触发加载点击
+
+    const presets = getUserPresets();
+    const target = presets.find(p => p.id === id);
+    if (!target) return;
+
+    let dataToLoad = null;
+    let selectorMode = 'all';
+
+    // 1. 确定要导出的数据和选择器模式
+    if (target.type === 'universal') {
+        dataToLoad = target.data;
+        selectorMode = 'all'; // 通用存档默认导出所有
+    } else {
+        dataToLoad = target[mode];
+        if (!dataToLoad) {
+            showToast('⚠️ 暂无数据');
+            return;
+        }
+        // 组合存档：自动设置选择器为 .sent 或 .received
+        selectorMode = (mode === 'sent') ? 'sent' : 'received';
+    }
+
+    // 2. 【核心】保存当前画布的快照 (Snapshot)
+    const currentState = getCurrentStateObj();
+    const currentTabId = document.querySelector('.tab-content.active')?.id || 'tab10';
+
+    try {
+        // 3. 瞬间加载存档数据
+        localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(dataToLoad));
+        loadState(); // 恢复数据到输入框
+
+        // 4. 强制设置导出页面的选择器 (为了生成的 CSS 是正确的)
+        const selEl = document.getElementById('selectorType');
+        if(selEl) selEl.value = selectorMode;
+
+        // 5. 触发更新以生成代码
+        update();
+        if(typeof updateTransferCSS === 'function') updateTransferCSS();
+
+        // 6. 获取生成的代码
+        const codeText = document.getElementById('codeOut').innerText;
+
+        // 7. 复制到剪贴板
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(codeText)
+                .then(() => showToast(`✅ 成功复制【${target.name}】的代码`))
+                .catch(() => fallbackCopy(codeText));
+        } else {
+            fallbackCopy(codeText); // 使用之前定义的降级复制函数
+            showToast(`✅ 成功复制【${target.name}】的代码`);
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('❌ 导出失败');
+    } finally {
+        // 8. 【核心】瞬间恢复用户原来的画布 (Restore)
+        localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(currentState));
+        loadState(); // 恢复原来的数据
+        
+        // 恢复选择器选择
+        const selEl = document.getElementById('selectorType');
+        if(selEl && currentState.selectorType) selEl.value = currentState.selectorType;
+        
+        // 刷新视图
+        update();
+        if(typeof updateTransferCSS === 'function') updateTransferCSS();
+        
+        // 恢复 Tab 状态 (实际上我们没跳走，但这能保证视图一致)
+        if(typeof syncUIState === 'function') syncUIState();
+    }
+}
+// 3. 加载逻辑
+function loadUserPreset(id, mode) {
+    const presets = getUserPresets();
+    const target = presets.find(p => p.id === id);
+    if (!target) return;
+
+    let dataToLoad = null;
+
+    // 智能获取数据
+    if (target.type === 'universal') {
+        dataToLoad = target.data;
+    } else {
+        dataToLoad = target[mode];
+        if (!dataToLoad) {
+            showToast('⚠️ 此位置为空，请先保存');
+            fillName(target.name);
+            return;
+        }
+    }
+
+    if(!confirm(`确定加载存档【${target.name}】吗？`)) return;
+
+    // 恢复数据
+    localStorage.setItem('eveBubbleState_Final_V13', JSON.stringify(dataToLoad));
+    if (loadState()) {
+        update();
+        updateTransferCSS();
+        
+        // 根据类型跳转或修改设置
+        if(!document.getElementById('tab4').classList.contains('active')) {
+            switchTab(0);
+        }
+
+        // 如果是组合存档，自动修改导出选择器
+        const selEl = document.getElementById('selectorType');
+        if (selEl) {
+            if (mode === 'sent') selEl.value = 'sent';
+            else if (mode === 'received') selEl.value = 'received';
+            else selEl.value = 'all'; // 通用存档默认选 all
+            selEl.dispatchEvent(new Event('change'));
+        }
+
+        showToast(`📂 已加载：${target.name}`);
+    }
+}
+
+// 4. 删除 & 辅助
+function deleteUserPreset(id) {
+    if(!confirm('确定删除此存档？')) return;
+    let presets = getUserPresets();
+    presets = presets.filter(p => p.id !== id);
+    localStorage.setItem('eve_user_presets_v4', JSON.stringify(presets));
+    renderPresetList();
+    showToast('🗑️ 已删除');
+}
+
+function fillName(name) {
+    document.getElementById('presetNameInput').value = name;
+    document.getElementById('tab10').scrollTop = 0;
+}
+
+// 5. 渲染列表 (核心：根据类型显示不同样式的卡片)
+// 5. 渲染列表 (移动端布局优化版)
+function renderPresetList() {
+    const listEl = document.getElementById('userPresetList');
+    if (!listEl) return;
+    const presets = getUserPresets();
+    
+    if (presets.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center;color:#999;font-size:13px;padding:40px 0;">暂无存档<br><span style="font-size:11px;opacity:0.6">在上方输入名称保存一个吧</span></div>';
+        return;
+    }
+
+    listEl.innerHTML = '';
+
+    presets.forEach(p => {
+        const item = document.createElement('div');
+        
+        // === 类型A: 通用存档 (Card Layout) ===
+        if (p.type === 'universal') {
+            item.className = 'saved-item-v4 universal';
+            item.innerHTML = `
+                <div class="saved-inner-pad">
+                    <!-- 上半部分：信息 + 删除 -->
+                    <div class="saved-top-row">
+                        <div class="saved-info-box">
+                            <div class="saved-name-v4" style="font-size:15px; margin-bottom:4px;">${p.name}</div>
+                            <div class="saved-date-v4">通用样式 · ${p.date}</div>
+                        </div>
+                        <button class="del-btn-static" onclick="deleteUserPreset(${p.id})">×</button>
+                    </div>
+
+                    <!-- 下半部分：操作按钮 (平分宽度) -->
+                    <div class="saved-action-row">
+                        <button class="act-btn-big copy" onclick="quickExportPreset(${p.id}, 'universal', event)">
+                            📋 复制代码
+                        </button>
+                        <button class="act-btn-big load" onclick="loadUserPreset(${p.id}, 'universal')">
+                            ⚡ 加载配置
+                        </button>
+                    </div>
+                </div>
+            `;
+        } 
+        // === 类型B: 组合存档 (Dual Layout) ===
+        else {
+            const hasSent = !!p.sent;
+            const hasRecv = !!p.received;
+            
+            // 辅助函数：生成插槽按钮
+            const makeSlot = (type, hasData) => {
+                const label = type === 'sent' ? '发送(右)' : '接收(左)';
+                const cls = type === 'sent' ? 'sent' : 'recv';
+                
+                // 如果没数据，显示补录
+                if (!hasData) return `
+                    <div class="slot-v4 empty" onclick="loadUserPreset(${p.id}, '${type}')">
+                        + 补录${label}
+                    </div>`;
+                
+                // 如果有数据，显示加载 + 复制小按钮
+                return `
+                    <div class="slot-v4 filled ${cls}" onclick="loadUserPreset(${p.id}, '${type}')">
+                        <span style="flex:1">加载${label}</span>
+                        <span class="mini-copy-btn" title="复制代码" 
+                              onclick="quickExportPreset(${p.id}, '${type}', event); event.stopPropagation();">
+                            📋
+                        </span>
+                    </div>
+                `;
+            };
+
+            item.className = 'saved-item-v4 dual';
+            item.innerHTML = `
+                <div class="saved-inner-pad">
+                    <!-- 上半部分：信息 + 删除 -->
+                    <div class="saved-top-row" onclick="fillName('${p.name}')">
+                        <div class="saved-info-box">
+                            <div class="saved-name-v4">
+                                ${p.name} 
+                                <span style="font-size:10px; color:#fff; background:#0066CC; padding:1px 5px; border-radius:4px; margin-left:5px; vertical-align:middle;">组合</span>
+                            </div>
+                            <div class="saved-date-v4">${p.date}</div>
+                        </div>
+                        <button class="del-btn-static" onclick="deleteUserPreset(${p.id})">×</button>
+                    </div>
+
+                    <!-- 下半部分：两个大的插槽按钮 -->
+                    <div class="saved-slots-v4" style="margin-top:5px;">
+                        ${makeSlot('sent', hasSent)}
+                        ${makeSlot('received', hasRecv)}
+                    </div>
+                </div>
+            `;
+        }
+        listEl.appendChild(item);
+    });
+}
+
+
+
+window.addEventListener('load', () => setTimeout(renderPresetList, 500));
+
 // 页面加载时同步一下状态
 window.addEventListener('load', () => {
     // 默认高亮第一个
@@ -4258,6 +5125,196 @@ window.addEventListener('load', () => {
     if(firstBtn) firstBtn.classList.add('active');
 });
 
+/* ================= 整合版导出与清洗逻辑 ================= */
+
+// 存储临时的两份代码
+let cleanerCache = { sent: null, received: null };
+
+// 1. 暂存功能 (自动识别当前是左还是右，或者强制指定)
+// 1. 暂存功能 (带持久化存储)
+function captureSource(type) {
+    // 强制切换选择器以生成正确前缀的代码
+    const oldSel = document.getElementById('selectorType').value;
+    const selEl = document.getElementById('selectorType');
+    
+    // 临时切换到对应模式触发生成
+    selEl.value = type; 
+    update(); // 触发主渲染
+    if(typeof updateTransferCSS === 'function') updateTransferCSS();
+
+    // 抓取生成的代码
+    const code = document.getElementById('codeOut').innerText;
+    cleanerCache[type] = code;
+    
+    // ★★★ 新增：保存到本地存储，防止刷新丢失 ★★★
+    localStorage.setItem('eveBubble_cleanerCache_v1', JSON.stringify(cleanerCache));
+
+    // 恢复原来的选择器
+    selEl.value = oldSel;
+    update(); // 恢复视图
+
+    // UI 更新反馈
+    updateMergeUI(type);
+    showToast(`已暂存 [${type === 'sent' ? '发送方' : '接收方'}] 配置`);
+}
+// UI 状态刷新
+function updateMergeUI(type) {
+    const statusEl = document.getElementById(type === 'sent' ? 'status-sent' : 'status-recv');
+    const boxEl = document.getElementById(type === 'sent' ? 'slot-sent-box' : 'slot-recv-box');
+    
+    if (statusEl && boxEl) {
+        statusEl.innerText = '✅ 已就绪 (点击覆盖)';
+        statusEl.style.color = '#34c759';
+        // 边框变实线，背景加深
+        boxEl.style.borderStyle = 'solid';
+        boxEl.style.background = '#fff';
+        boxEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+    }
+}
+
+// 2. 合并与清洗逻辑 (结果直接输出到主代码框)
+function mergeAndCleanCSS() {
+    const cssA = cleanerCache.sent; // 右
+    const cssB = cleanerCache.received; // 左
+
+    if (!cssA || !cssB) {
+        alert('⚠️ 尚未完成双向暂存！\n\n请分别点击“暂存发送方”和“暂存接收方”按钮。\n(你可以加载存档或手动调整样式后再点击暂存)');
+        return;
+    }
+
+    // 解析规则
+    const rulesA = parseCSSRules(cssA);
+    const rulesB = parseCSSRules(cssB);
+
+    let sharedCSS = "";
+    let sentDiffCSS = "";
+    let recvDiffCSS = "";
+    
+    // 映射 Key: 去除 .sent/.received 后的通用选择器
+    const mapKey = (s) => s.trim().replace('.sent', '').replace('.received', '');
+
+    let mapA = {}; rulesA.forEach(r => { mapA[mapKey(r.selector)] = r.body; });
+    let mapB = {}; rulesB.forEach(r => { mapB[mapKey(r.selector)] = r.body; });
+
+    // 集合并集
+    const allKeys = new Set([...Object.keys(mapA), ...Object.keys(mapB)]);
+
+    allKeys.forEach(key => {
+        const bodyA = mapA[key];
+        const bodyB = mapB[key];
+
+        // 单边存在
+        if (!bodyA && bodyB) { recvDiffCSS += formatRule(key, bodyB, 'received'); return; }
+        if (bodyA && !bodyB) { sentDiffCSS += formatRule(key, bodyA, 'sent'); return; }
+
+        // 双边存在：属性级对比
+        const propsA = parseProps(bodyA);
+        const propsB = parseProps(bodyB);
+        let sharedProps = [];
+        let diffA = [];
+        let diffB = [];
+
+        for (let prop in propsA) {
+            if (propsB[prop] === propsA[prop]) {
+                sharedProps.push(`${prop}: ${propsA[prop]};`);
+            } else {
+                diffA.push(`${prop}: ${propsA[prop]};`);
+            }
+        }
+        for (let prop in propsB) {
+            if (propsA[prop] !== propsB[prop]) {
+                diffB.push(`${prop}: ${propsB[prop]};`);
+            }
+        }
+
+        // 生成代码块
+        if (sharedProps.length > 0) sharedCSS += `${key} {\n  ${sharedProps.join('\n  ')}\n}\n`;
+        if (diffA.length > 0) sentDiffCSS += formatRule(key, diffA.join('\n  '), 'sent');
+        if (diffB.length > 0) recvDiffCSS += formatRule(key, diffB.join('\n  '), 'received');
+    });
+
+    // 组装最终结果
+    let finalOutput = `/* ▸◂┄▸◂┄代码由鲷鱼烧气泡生成器辅助生成┄▸◂┄▸◂ */\n\n`;
+    finalOutput += `/* === 公共基础样式 (Shared) === */\n${sharedCSS}\n`;
+    finalOutput += `/* === 发送方差异 (Sent) === */\n${sentDiffCSS}\n`;
+    finalOutput += `/* === 接收方差异 (Received) === */\n${recvDiffCSS}\n`;
+
+    // ★★★ 关键：将结果填回主代码框，让用户可以直接点上面的“复制”按钮
+    const codeBox = document.getElementById('codeOut');
+    codeBox.innerText = finalOutput;
+    
+    // 滚动到底部
+    codeBox.scrollIntoView({behavior: "smooth"});
+    showToast('⚡ 代码合并完成！');
+    
+    const btn = document.getElementById('btn-merge-copy');
+    
+    // 定义成功后的视觉反馈
+    const showSuccess = () => {
+        showToast('⚡ 代码已合并并复制！');
+        
+        // 按钮变绿反馈
+        const oldText = btn.innerText;
+        const oldBg = btn.style.background;
+        
+        btn.innerText = '✅ 合并成功！已复制到剪贴板';
+        btn.style.background = '#34c759';
+        
+        setTimeout(() => {
+            btn.innerText = oldText;
+            btn.style.background = oldBg;
+        }, 3000);
+    };
+
+    // 尝试复制
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(finalOutput)
+            .then(showSuccess)
+            .catch(() => fallbackCopy(finalOutput)); // 如果API失败，走降级方案
+    } else {
+        fallbackCopy(finalOutput); // 降级方案
+        showSuccess();
+    }
+}
+
+// --- 以下辅助函数保持不变 ---
+function parseCSSRules(css) {
+    const cleanCSS = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rules = [];
+    const regex = /([^{]+)\{([^}]+)\}/g;
+    let match;
+    while ((match = regex.exec(cleanCSS)) !== null) {
+        rules.push({ selector: match[1].trim(), body: match[2].trim() });
+    }
+    return rules;
+}
+
+function parseProps(bodyStr) {
+    const props = {};
+    bodyStr.split(';').forEach(line => {
+        if (!line.trim()) return;
+        const parts = line.split(':');
+        if (parts.length >= 2) {
+            const key = parts[0].trim();
+            const val = parts.slice(1).join(':').trim();
+            props[key] = val;
+        }
+    });
+    return props;
+}
+
+function formatRule(key, bodyContent, type) {
+    let selector = key;
+    if (selector.includes('.message-container')) {
+        selector = selector.replace('.message-container', `.message-container.${type}`);
+    } else {
+        selector = `.${type} ${selector}`;
+    }
+    return `${selector} {\n  ${bodyContent}\n}\n`;
+}
+
 </script>
 </body>
 </html>
+
+
